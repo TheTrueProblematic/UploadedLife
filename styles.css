@@ -77,6 +77,11 @@ a {
   border-radius: 0.5rem;
   min-width: 220px;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .stat-block.primary {
@@ -116,23 +121,42 @@ a {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.9rem;
+  gap: 0.35rem;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 11rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  scrollbar-gutter: stable;
 }
 
 .effect-item {
   display: flex;
   justify-content: space-between;
-  gap: 0.3rem;
+  align-items: flex-start;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.effect-item span {
+.effect-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.effect-value {
+  flex: 0 0 auto;
   white-space: nowrap;
+  text-align: right;
 }
 
 .effect-empty {
   color: var(--muted);
   font-size: 0.85rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .scenario-card {
@@ -181,13 +205,19 @@ a {
   box-shadow: 0 8px 25px rgba(255, 255, 255, 0.15);
 }
 
-.footer-note {
+.site-footer {
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   font-size: 0.75rem;
-  color: var(--muted);
+  color: var(--fg);
   margin-top: auto;
+  font-family: 'Courier New', monospace;
+}
+
+.site-footer a {
+  text-decoration: none;
+  color: var(--fg) !important;
 }
 
 .id-badges {
@@ -195,13 +225,22 @@ a {
   flex-wrap: wrap;
   gap: 0.35rem;
   margin-top: 0.5rem;
+  max-height: 7rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  align-content: flex-start;
 }
 
 .id-pill {
   border: 1px solid var(--border);
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: clamp(0.7rem, 1.6vw, 0.85rem);
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .modal-overlay {
@@ -293,17 +332,20 @@ body.modal-open .page-shell {
 }
 
 .intro-sequence {
-  width: min(900px, 100%);
-  flex: 1;
+  width: min(80vw, 1200px);
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 1.2rem;
-  font-size: clamp(1rem, 1.2vw, 1.15rem);
+  gap: clamp(1rem, 1.7vw, 1.5rem);
+  font-size: clamp(0.9rem, min(1.05vw, 1.5vh), 1.2rem);
+  line-height: 1.65;
   color: inherit;
-  max-height: 55vh;
-  overflow-y: auto;
-  padding-right: 0.5rem;
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+  text-align: left;
+  margin: 0 auto;
 }
 
 .intro-paragraph {
@@ -311,6 +353,10 @@ body.modal-open .page-shell {
   transform: translateY(0);
   transition: opacity 0.9s ease, transform 0.9s ease;
   text-align: left;
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  align-self: center;
 }
 
 .intro-paragraph[data-stage="pending"] {
@@ -331,6 +377,10 @@ body.modal-open .page-shell {
   opacity: 1;
   transform: translateY(0);
   transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.intro-footer .site-footer {
+  margin-top: 0;
 }
 
 .intro-footer[data-stage="pending"] {
@@ -367,8 +417,20 @@ body.modal-open .page-shell {
   letter-spacing: 0.4em;
 }
 
-.intro-cta .footer-note {
+.intro-cta .site-footer {
   margin-top: 2rem;
+}
+
+@media (max-height: 760px) {
+  .intro-shell {
+    padding: clamp(1.5rem, 3vw, 3rem);
+  }
+
+  .intro-sequence {
+    width: min(86vw, 1200px);
+    font-size: clamp(0.8rem, min(1.2vw, 1.8vh), 1.05rem);
+    line-height: 1.55;
+  }
 }
 
 .mobile-wrapper,

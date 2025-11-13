@@ -59,12 +59,16 @@
         dismissible: true,
       };
       this.storage = null;
+      this.audioElement = null;
+      this.audioUnlockPending = false;
     }
 
     attachPage(win) {
       this.ensureProgressBridge(win);
       this.frameRefs.currentFrameWindow = win;
+      this.ensureBackgroundAudio();
       const doc = win.document;
+      this.applyFooterYear(doc);
       const pageType = doc.body?.dataset?.page || 'scenario';
 
       switch (pageType) {
@@ -105,6 +109,74 @@
       if (!win.progressGame) {
         win.progressGame = (...args) => root.__uploadedLifeProcessor(...args);
       }
+    }
+
+    ensureBackgroundAudio() {
+      if (this.audioElement) {
+        this.tryStartAudio();
+        return;
+      }
+      try {
+        const soundtrack = new Audio('Resources/music.mp3');
+        soundtrack.loop = true;
+        soundtrack.volume = 0.2;
+        soundtrack.preload = 'auto';
+        this.audioElement = soundtrack;
+        this.tryStartAudio();
+      } catch (err) {
+        console.warn('Uploaded Life: unable to initialize background audio', err);
+      }
+    }
+
+    tryStartAudio() {
+      if (!this.audioElement) return;
+      const attempt = this.audioElement.play();
+      if (attempt && typeof attempt.catch === 'function') {
+        attempt.catch(() => {
+          this.setupAudioUnlock();
+        });
+      }
+    }
+
+    setupAudioUnlock() {
+      if (this.audioUnlockPending) return;
+      this.audioUnlockPending = true;
+      const targets = [
+        root,
+        root.document,
+        this.frameRefs.currentFrameWindow,
+        this.frameRefs.currentFrameWindow?.document,
+      ].filter((target) => !!target?.addEventListener);
+      const unlock = () => {
+        if (!this.audioUnlockPending) return;
+        this.audioUnlockPending = false;
+        targets.forEach((target) => {
+          if (target?.removeEventListener) {
+            target.removeEventListener('pointerdown', unlock);
+            target.removeEventListener('keydown', unlock);
+          }
+        });
+        this.tryStartAudio();
+      };
+      targets.forEach((target) => {
+        ['pointerdown', 'keydown'].forEach((evt) => target.addEventListener(evt, unlock, { once: true }));
+      });
+    }
+
+    buildFooter(doc) {
+      const footer = doc.createElement('footer');
+      footer.className = 'site-footer';
+      footer.innerHTML = '<a href="https://maximilianmcclelland.com" style="text-decoration:none;color:black;">TrueProblematic © <span id="footer-year"></span></a>';
+      this.applyFooterYear(footer);
+      return footer;
+    }
+
+    applyFooterYear(scope = document) {
+      if (!scope?.querySelectorAll) return;
+      const year = String(new Date().getFullYear());
+      scope.querySelectorAll('#footer-year').forEach((el) => {
+        el.textContent = year;
+      });
     }
 
     initIndex(win) {
@@ -188,10 +260,10 @@
           <p class="scenario-text">You ran out of happiness and cannot continue.</p>
           <p class="scenario-text">Money: ${currency.format(this.state.lastSnapshot?.money ?? this.state.money)} — Happiness: ${Math.round(this.state.lastSnapshot?.happiness ?? this.state.happiness)}%</p>
           <button class="cta-button" data-action="replay">Try Again?</button>
-        </div>
-        <p class="footer-note">© Uploaded Life • Team Science Digital Communication</p>`;
+        </div>`;
       doc.body.innerHTML = '';
       doc.body.appendChild(shell);
+      shell.appendChild(this.buildFooter(doc));
       doc.querySelector('[data-action="replay"]')?.addEventListener('click', () => this.startNewRun({ viaIntro: false }));
     }
 
@@ -250,10 +322,7 @@
 
       container.appendChild(card);
 
-      const footer = doc.createElement('p');
-      footer.className = 'footer-note';
-      footer.textContent = '© Uploaded Life • Team Science Digital Communication';
-      container.appendChild(footer);
+      container.appendChild(this.buildFooter(doc));
 
       doc.body.innerHTML = '';
       doc.body.appendChild(container);
@@ -310,8 +379,10 @@
         const li = doc.createElement('li');
         li.className = 'effect-item';
         const name = doc.createElement('span');
+        name.className = 'effect-label';
         name.textContent = effect.name;
         const value = doc.createElement('span');
+        value.className = 'effect-value';
         value.textContent = isMoney ? currency.format(effect.amount) : `${effect.amount > 0 ? '+' : ''}${effect.amount}%`;
         li.appendChild(name);
         li.appendChild(value);
@@ -666,10 +737,7 @@
       });
       card.appendChild(button);
       shell.appendChild(card);
-      const foot = doc.createElement('p');
-      foot.className = 'footer-note';
-      foot.textContent = '© Uploaded Life • Team Science Digital Communication';
-      shell.appendChild(foot);
+      shell.appendChild(this.buildFooter(doc));
       doc.body.innerHTML = '';
       doc.body.appendChild(shell);
     }
@@ -1136,8 +1204,12 @@
         build: () => {
           const cost = utils.weightedBetween(event.cost[0], event.cost[1]);
           const happy = utils.weightedBetween(event.happiness[0], event.happiness[1]);
+          const formattedCost = currency.format(cost);
+          const description = event.description
+            .replace(/\$\$\{cost\}/g, formattedCost)
+            .replace(/\{cost\}/g, formattedCost);
           return {
-            text: event.description.replace('{cost}', cost).replace('$${cost}', cost),
+            text: description,
             choices: [
               {
                 label: 'Join in',
@@ -1212,8 +1284,9 @@
         build: () => {
           const cost = utils.weightedBetween(offer.cost[0], offer.cost[1]);
           const happy = utils.weightedBetween(offer.happiness[0], offer.happiness[1]);
+          const amountLabel = currency.format(cost);
           return {
-            text: offer.text.replace('$${cost}', cost),
+            text: offer.text.replace(/\$\$\{cost\}/g, amountLabel),
             choices: [
               { label: 'Skip it', next: 'RANDOM' },
               {
@@ -1290,8 +1363,9 @@
         pool: 'random',
         build: () => {
           const raise = utils.weightedBetween(50, 200);
+          const raiseLabel = currency.format(raise);
           return {
-            text: promo.text.replace('$${raise}', raise),
+            text: promo.text.replace(/\$\$\{raise\}/g, raiseLabel),
             details: 'It comes with more responsibility and the risk of extra stress.',
             choices: [
               {
