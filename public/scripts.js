@@ -35,6 +35,15 @@
     },
   };
 
+  const scriptBase = (() => {
+    try {
+      const src = document.currentScript?.src || new URL('scripts.js', window.location.href).href;
+      return src.replace(/scripts\.js(?:\?.*)?$/i, '');
+    } catch (err) {
+      return '';
+    }
+  })();
+
   const scenarioLibrary = buildScenarioLibrary(utils);
 
   class UploadedLifeHost {
@@ -49,7 +58,7 @@
         indexWindow: null,
         iframe: null,
         currentFrameWindow: null,
-        lastGameSrc: 'main.html',
+        lastGameSrc: 'Pages/main.html',
       };
       this.modal = {
         overlay: null,
@@ -61,15 +70,19 @@
       this.storage = null;
       this.audioElement = null;
       this.audioUnlockPending = false;
+      this.currentTrack = '';
+      this.currentTheme = '';
+      this.audioUnlockHandler = null;
+      this.audioUnlockTargets = new Set();
+      this.audioUnlockEvents = ['pointerdown', 'keydown'];
     }
 
     attachPage(win) {
       this.ensureProgressBridge(win);
       this.frameRefs.currentFrameWindow = win;
-      this.ensureBackgroundAudio();
       const doc = win.document;
-      this.applyFooterYear(doc);
       const pageType = doc.body?.dataset?.page || 'scenario';
+      this.applyFooterYear(doc);
 
       switch (pageType) {
         case 'index':
@@ -111,59 +124,141 @@
       }
     }
 
-    ensureBackgroundAudio() {
-      if (this.audioElement) {
-        this.tryStartAudio();
-        return;
-      }
+    ensureAudioElement() {
+      if (this.audioElement) return;
       try {
-        const soundtrack = new Audio('Resources/music.mp3');
+        const soundtrack = new Audio();
         soundtrack.loop = true;
         soundtrack.volume = 0.2;
         soundtrack.preload = 'auto';
         this.audioElement = soundtrack;
-        this.tryStartAudio();
       } catch (err) {
         console.warn('Uploaded Life: unable to initialize background audio', err);
       }
     }
 
-    tryStartAudio() {
+    setAudioThemeByTarget(target, options = {}) {
+      if (!target) return;
+      const theme = this.resolveThemeFromTarget(target);
+      this.setAudioTheme(theme, options);
+    }
+
+    setAudioTheme(theme, { force = false } = {}) {
+      if (!theme) return;
+      if (!force && theme === this.currentTheme) {
+        this.tryStartAudio();
+        return;
+      }
+      this.currentTheme = theme;
+      this.ensureAudioElement();
       if (!this.audioElement) return;
-      const attempt = this.audioElement.play();
-      if (attempt && typeof attempt.catch === 'function') {
-        attempt.catch(() => {
-          this.setupAudioUnlock();
-        });
+      const track = this.resolveTrackForTheme(theme);
+      if (!track) return;
+      if (force || this.currentTrack !== track) {
+        this.currentTrack = track;
+        try {
+          this.audioElement.pause();
+        } catch (err) {
+          /* ignore */
+        }
+        this.audioElement.src = track;
+        this.audioElement.currentTime = 0;
+      }
+      try {
+        this.audioElement.load();
+      } catch (err) {
+        console.warn('Uploaded Life: unable to load background audio', err);
+      }
+      this.tryStartAudio();
+    }
+
+    resolveThemeFromTarget(target) {
+      const raw = (target || '').split('?')[0] || '';
+      const file = raw.split('/').pop() || '';
+      const name = file.toLowerCase();
+      if (!name) return 'base';
+      if (name === 'main' || name === 'main.html' || name === 'mobile' || name === 'mobile.html') return 'base';
+      if (name === 'learnmore' || name === 'learnmore.html' || name === 'nohappiness' || name === 'nohappiness.html') return 'somber';
+      if (name === 'identitytheft1' || name === 'identitytheft1.html' || name === 'identitytheft2' || name === 'identitytheft2.html' || name === 'identitytheft3' || name === 'identitytheft3.html') {
+        return 'spicy';
+      }
+      return 'peak';
+    }
+
+    resolveTrackForTheme(theme) {
+      const pathForTheme = (file) => this.resolveAssetPath(file);
+      switch (theme) {
+        case 'base':
+          return pathForTheme('Resources/Music/Base.mp3');
+        case 'peak':
+          return pathForTheme('Resources/Music/PeakPlay.mp3');
+        case 'spicy':
+          return pathForTheme('Resources/Music/Spicy.mp3');
+        case 'somber':
+          return pathForTheme('Resources/Music/SomberEnd.mp3');
+        default:
+          return pathForTheme('Resources/Music/Base.mp3');
       }
     }
 
-    setupAudioUnlock() {
-      if (this.audioUnlockPending) return;
-      this.audioUnlockPending = true;
-      const targets = [
-        root,
-        root.document,
-        this.frameRefs.currentFrameWindow,
-        this.frameRefs.currentFrameWindow?.document,
-      ].filter((target) => !!target?.addEventListener);
-      const unlock = () => {
-        if (!this.audioUnlockPending) return;
-        this.audioUnlockPending = false;
-        targets.forEach((target) => {
-          if (target?.removeEventListener) {
-            target.removeEventListener('pointerdown', unlock);
-            target.removeEventListener('keydown', unlock);
-          }
-        });
-        this.tryStartAudio();
-      };
-      targets.forEach((target) => {
-        ['pointerdown', 'keydown'].forEach((evt) => target.addEventListener(evt, unlock, { once: true }));
-      });
+    resolveAssetPath(path) {
+      if (!path) return path;
+      if (!scriptBase) return path;
+      try {
+        return new URL(path, scriptBase).href;
+      } catch (err) {
+        return path;
+      }
     }
 
-    buildFooter(doc) {
+  tryStartAudio() {
+    if (!this.audioElement) return;
+    const attempt = this.audioElement.play();
+    if (attempt && typeof attempt.catch === 'function') {
+      attempt.catch(() => {
+        this.setupAudioUnlock();
+      });
+    }
+  }
+
+  setupAudioUnlock() {
+    if (!this.audioUnlockPending) {
+      this.audioUnlockPending = true;
+      this.audioUnlockTargets.clear();
+      this.audioUnlockHandler = () => {
+        if (!this.audioUnlockPending) return;
+        this.audioUnlockPending = false;
+        this.audioUnlockTargets.forEach((target) => {
+          this.audioUnlockEvents.forEach((evt) => {
+            target.removeEventListener(evt, this.audioUnlockHandler);
+          });
+        });
+        this.audioUnlockTargets.clear();
+        this.tryStartAudio();
+      };
+    }
+    const targets = this.collectAudioUnlockTargets();
+    targets.forEach((target) => {
+      if (this.audioUnlockTargets.has(target)) return;
+      this.audioUnlockTargets.add(target);
+      this.audioUnlockEvents.forEach((evt) => {
+        target.addEventListener(evt, this.audioUnlockHandler, { once: true });
+      });
+    });
+  }
+
+  collectAudioUnlockTargets() {
+    return [
+      root,
+      root.document,
+      this.frameRefs.currentFrameWindow,
+      this.frameRefs.currentFrameWindow?.document,
+      this.frameRefs.iframe?.contentWindow,
+      this.frameRefs.iframe?.contentWindow?.document,
+    ].filter((target) => !!target && typeof target.addEventListener === 'function');
+  }
+
+  buildFooter(doc) {
       const footer = doc.createElement('footer');
       footer.className = 'site-footer';
       footer.innerHTML = '<a href="https://maximilianmcclelland.com" style="text-decoration:none;color:black;">TrueProblematic © <span id="footer-year"></span></a>';
@@ -184,7 +279,9 @@
       const doc = win.document;
       const frame = doc.getElementById('game-frame');
       this.frameRefs.iframe = frame;
-      this.frameRefs.lastGameSrc = frame?.getAttribute('src') || 'main.html';
+      const initialSrc = this.normalizeTarget(frame?.getAttribute('src') || this.frameRefs.lastGameSrc || 'Pages/main.html');
+      this.frameRefs.lastGameSrc = initialSrc;
+      this.setAudioThemeByTarget(initialSrc, { force: true });
       const resizeHandler = () => this.evaluateViewport();
       win.addEventListener('resize', resizeHandler);
       this.evaluateViewport();
@@ -264,12 +361,16 @@
       doc.body.innerHTML = '';
       doc.body.appendChild(shell);
       shell.appendChild(this.buildFooter(doc));
-      doc.querySelector('[data-action="replay"]')?.addEventListener('click', () => this.startNewRun({ viaIntro: false }));
+      doc.querySelector('[data-action="replay"]')?.addEventListener('click', () => {
+        this.startNewRun({ viaIntro: false });
+      });
     }
 
     initLearnMore(win) {
       const doc = win.document;
-      doc.querySelector('[data-action="play-again"]')?.addEventListener('click', () => this.startNewRun({ viaIntro: false }));
+      doc.querySelector('[data-action="play-again"]')?.addEventListener('click', () => {
+        this.startNewRun({ viaIntro: false });
+      });
     }
 
     initMobile(win) {
@@ -729,11 +830,8 @@
       button.className = 'cta-button';
       button.textContent = buttonLabel;
       button.addEventListener('click', () => {
-        if (step === '3') {
-          this.navigateTo('learnmore.html');
-        } else {
-          this.navigateTo(step === '1' ? 'identitytheft2.html' : 'identitytheft3.html');
-        }
+        const destination = step === '3' ? 'learnmore.html' : step === '1' ? 'identitytheft2.html' : 'identitytheft3.html';
+        this.navigateTo(destination);
       });
       card.appendChild(button);
       shell.appendChild(card);
@@ -778,15 +876,42 @@
     }
 
     navigateTo(target) {
-      this.frameRefs.lastGameSrc = target;
+      const resolved = this.normalizeTarget(target);
+      this.frameRefs.lastGameSrc = resolved;
+      this.setAudioThemeByTarget(resolved, { force: true });
+      if (this.frameRefs.iframe) {
+        this.frameRefs.iframe.setAttribute('src', resolved);
+        return;
+      }
+      const standaloneTarget = this.standaloneTarget(resolved);
       const frameWin = this.frameRefs.currentFrameWindow;
       if (frameWin && frameWin !== root) {
-        frameWin.location.href = target;
-      } else if (this.frameRefs.iframe) {
-        this.frameRefs.iframe.setAttribute('src', target);
+        frameWin.location.href = standaloneTarget;
       } else {
-        root.location.href = target;
+        root.location.href = standaloneTarget;
       }
+    }
+
+    normalizeTarget(target) {
+      if (!target) return 'Pages/learnmore.html';
+      if (/^[a-z]+:\/\//i.test(target)) return target;
+      let trimmed = String(target).replace(/^\.\//, '').replace(/^\/+/, '');
+      if (trimmed.startsWith('Pages/')) {
+        return trimmed;
+      }
+      if (!trimmed.endsWith('.html')) {
+        trimmed = `${trimmed}.html`;
+      }
+      return `Pages/${trimmed}`;
+    }
+
+    standaloneTarget(resolved) {
+      if (!resolved?.startsWith('Pages/')) return resolved;
+      const local = resolved.slice('Pages/'.length);
+      if (!local) {
+        return resolved;
+      }
+      return local;
     }
 
     evaluateViewport(force = false) {
@@ -796,11 +921,15 @@
       const current = this.frameRefs.iframe.getAttribute('data-mode');
       if (shouldMobile && current !== 'mobile') {
         this.frameRefs.iframe.setAttribute('data-mode', 'mobile');
-        this.frameRefs.iframe.setAttribute('data-prev-src', this.frameRefs.iframe.getAttribute('src'));
-        this.frameRefs.iframe.setAttribute('src', 'mobile.html');
+        const prevSrc = this.frameRefs.iframe.getAttribute('src') || this.frameRefs.lastGameSrc || 'Pages/main.html';
+        this.frameRefs.iframe.setAttribute('data-prev-src', prevSrc);
+        const mobileSrc = 'Pages/mobile.html';
+        this.setAudioThemeByTarget(mobileSrc, { force: true });
+        this.frameRefs.iframe.setAttribute('src', mobileSrc);
       } else if ((!shouldMobile || force) && current === 'mobile') {
         this.frameRefs.iframe.setAttribute('data-mode', 'game');
-        const prev = this.frameRefs.iframe.getAttribute('data-prev-src') || this.frameRefs.lastGameSrc || 'main.html';
+        const prev = this.frameRefs.iframe.getAttribute('data-prev-src') || this.frameRefs.lastGameSrc || 'Pages/main.html';
+        this.setAudioThemeByTarget(prev, { force: true });
         this.frameRefs.iframe.setAttribute('src', prev);
       }
     }
