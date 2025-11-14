@@ -451,13 +451,13 @@ body.modal-open .page-shell {
 }
 
 .iframe-doc-shell {
-    width: min(62.5vw, 1000px);
+    width: 40vw;
     max-width: 100%;
     min-height: 70vh;
-    border: 1px solid var(--border);
+    border: none;
     border-radius: 0.5rem;
     overflow: hidden;
-    margin: 0.25rem auto 0;
+    margin: -3vh auto 0;
     display: flex;
     justify-content: center;
     align-items: flex-start;
