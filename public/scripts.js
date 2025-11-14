@@ -431,7 +431,7 @@
         buildFooter(doc) {
             const footer = doc.createElement('footer');
             footer.className = 'site-footer';
-            footer.innerHTML = '<a href="https://maximilianmcclelland.com" style="text-decoration:none;color:black;">TrueProblematic © <span id="footer-year"></span></a>';
+            footer.innerHTML = '<a href="https://maximilianmcclelland.com" style="text-decoration:none;color:black;" target="_blank" rel="noopener noreferrer">TrueProblematic © <span id="footer-year"></span></a>';
             this.applyFooterYear(footer);
             return footer;
         }
