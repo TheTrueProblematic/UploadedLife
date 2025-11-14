@@ -149,6 +149,9 @@
                 case 'learnmore':
                     this.initLearnMore(win);
                     break;
+                case 'credits':
+                    this.initCredits(win);
+                    break;
                 case 'mobile':
                     this.initMobile(win);
                     break;
@@ -537,6 +540,28 @@
             const doc = win.document;
             doc.querySelector('[data-action="play-again"]')?.addEventListener('click', () => {
                 this.startNewRun({ viaIntro: false });
+            });
+            doc.querySelector('[data-action="share-experience"]')?.addEventListener('click', () => {
+                const url = 'https://forms.gle/jZhmSs3vRNRfoTeaA';
+                try {
+                    win.open(url, '_blank', 'noopener');
+                } catch (err) {
+                    try {
+                        root.open(url, '_blank', 'noopener');
+                    } catch (error) {
+                        window.open(url, '_blank');
+                    }
+                }
+            });
+            doc.querySelector('[data-action="open-credits"]')?.addEventListener('click', () => {
+                this.navigateTo('credits.html');
+            });
+        }
+
+        initCredits(win) {
+            const doc = win.document;
+            doc.querySelector('[data-action="credits-back"]')?.addEventListener('click', () => {
+                this.navigateTo('learnmore.html');
             });
         }
 
