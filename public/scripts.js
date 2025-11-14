@@ -210,7 +210,7 @@
         handleAudioMessage(event) {
             const payload = event?.data?.uploadedLifeAudio;
             if (!payload || payload.type !== 'set-theme') return;
-            this.setAudioThemeByTarget(payload.target, { force: !!payload.force });
+            this.setAudioThemeByTarget(payload.target, {force: !!payload.force});
         }
 
         getParentWindow() {
@@ -225,7 +225,7 @@
         postAudioMessage(targetWindow, payload) {
             if (!targetWindow) return;
             try {
-                targetWindow.postMessage({ uploadedLifeAudio: payload }, '*');
+                targetWindow.postMessage({uploadedLifeAudio: payload}, '*');
             } catch (err) {
                 /* ignore cross-origin messaging issues */
             }
@@ -246,7 +246,7 @@
             this.currentTheme = theme;
             this.currentTrack = theme ? `proxy:${theme}` : '';
             const normalized = this.normalizeTarget(target);
-            this.forwardAudioTheme(normalized, { force: !!options.force });
+            this.forwardAudioTheme(normalized, {force: !!options.force});
         }
 
         setAudioThemeByTarget(target, options = {}) {
@@ -259,7 +259,7 @@
             this.setAudioTheme(theme, options);
         }
 
-        setAudioTheme(theme, { force = false } = {}) {
+        setAudioTheme(theme, {force = false} = {}) {
             if (!theme) return;
 
             // If the theme is unchanged and we already have a track, do not restart.
@@ -358,7 +358,7 @@
             const target = this.deriveTargetFromDocument(doc, pageType);
             if (!target) return;
             const shouldForce = !this.currentTrack;
-            this.setAudioThemeByTarget(target, { force: shouldForce });
+            this.setAudioThemeByTarget(target, {force: shouldForce});
         }
 
         deriveTargetFromDocument(doc, pageType) {
@@ -412,7 +412,7 @@
                 if (this.audioUnlockTargets.has(target)) return;
                 this.audioUnlockTargets.add(target);
                 this.audioUnlockEvents.forEach((evt) => {
-                    target.addEventListener(evt, this.audioUnlockHandler, { once: true });
+                    target.addEventListener(evt, this.audioUnlockHandler, {once: true});
                 });
             });
         }
@@ -451,7 +451,7 @@
             this.frameRefs.iframe = frame;
             const initialSrc = this.normalizeTarget(frame?.getAttribute('src') || this.frameRefs.lastGameSrc || 'Pages/main.html');
             this.frameRefs.lastGameSrc = initialSrc;
-            this.setAudioThemeByTarget(initialSrc, { force: !this.currentTrack });
+            this.setAudioThemeByTarget(initialSrc, {force: !this.currentTrack});
             const resizeHandler = () => this.evaluateViewport();
             win.addEventListener('resize', resizeHandler);
             this.evaluateViewport();
@@ -492,7 +492,7 @@
             setTimeout(() => revealParagraph(0), 400);
 
             button?.addEventListener('click', () => {
-                this.startNewRun({ viaIntro: true });
+                this.startNewRun({viaIntro: true});
             });
         }
 
@@ -532,14 +532,14 @@
             doc.body.appendChild(shell);
             shell.appendChild(this.buildFooter(doc));
             doc.querySelector('[data-action="replay"]')?.addEventListener('click', () => {
-                this.startNewRun({ viaIntro: false });
+                this.startNewRun({viaIntro: false});
             });
         }
 
         initLearnMore(win) {
             const doc = win.document;
             doc.querySelector('[data-action="play-again"]')?.addEventListener('click', () => {
-                this.startNewRun({ viaIntro: false });
+                this.startNewRun({viaIntro: false});
             });
             doc.querySelector('[data-action="share-experience"]')?.addEventListener('click', () => {
                 const url = 'https://forms.gle/jZhmSs3vRNRfoTeaA';
@@ -704,7 +704,7 @@
 
         handleChoice(choice) {
             if (choice.requireModal) {
-                this.openModal({ body: choice.requireModal, actions: [{ label: 'Continue', primary: true }] });
+                this.openModal({body: choice.requireModal, actions: [{label: 'Continue', primary: true}]});
                 return;
             }
 
@@ -719,14 +719,14 @@
                                 label: 'Submit ID',
                                 primary: true,
                                 handler: () => {
-                                    const updated = { ...choice, idService: service };
+                                    const updated = {...choice, idService: service};
                                     this.commitChoice(updated);
                                 },
                             },
                             {
                                 label: 'Nevermind',
                                 handler: () => {
-                                    const decline = choice.idRequirement.decline || { next: choice.next };
+                                    const decline = choice.idRequirement.decline || {next: choice.next};
                                     this.commitChoice({
                                         ...choice,
                                         next: decline.next || choice.next,
@@ -892,13 +892,13 @@
                 id: `hobeco-${hobbyId}`,
                 name: config.costLabel,
                 amount: -Math.abs(config.monthlyCost),
-                meta: { hobbyId },
+                meta: {hobbyId},
             };
             const happyEffect = {
                 id: `hobhap-${hobbyId}`,
                 name: config.happyLabel,
                 amount: config.happinessBoost,
-                meta: { hobbyId, requiresId: config.requiresId },
+                meta: {hobbyId, requiresId: config.requiresId},
             };
             this.state.economyEffects.push(econEffect);
             this.state.happinessEffects.push(happyEffect);
@@ -921,7 +921,7 @@
             this.state.happinessEffects = (this.state.happinessEffects || []).filter((effect) => effect.id !== hobby.happinessEffectId);
         }
 
-        verifyHobby({ hobbyId, provider }) {
+        verifyHobby({hobbyId, provider}) {
             const hobby = (this.state.hobbies || []).find((item) => item.id === hobbyId);
             if (hobby) {
                 hobby.idSubmitted = true;
@@ -1032,7 +1032,7 @@
             doc.body.appendChild(shell);
         }
 
-        startNewRun({ viaIntro } = {}) {
+        startNewRun({viaIntro} = {}) {
             this.state = this.createInitialState();
             this.persistState();
             const firstId = this.pickFirstScenario();
@@ -1132,7 +1132,7 @@
                 const raw = storage.getItem(this.localStorageKey);
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    parsed.economyEffects = parsed.economyEffects || [{ id: 'bills', name: 'Bills', amount: -1000 }];
+                    parsed.economyEffects = parsed.economyEffects || [{id: 'bills', name: 'Bills', amount: -1000}];
                     parsed.happinessEffects = parsed.happinessEffects || [];
                     parsed.idList = parsed.idList || [];
                     parsed.hobbies = parsed.hobbies || [];
@@ -1159,12 +1159,12 @@
                 money: 10000,
                 happiness: 50,
                 turn: 0,
-                economyEffects: [{ id: 'bills', name: 'Bills', amount: -1000 }],
+                economyEffects: [{id: 'bills', name: 'Bills', amount: -1000}],
                 happinessEffects: [],
                 idList: [],
                 hobbies: [],
                 visitedRandom: [],
-                lastSnapshot: { money: 10000, happiness: 50 },
+                lastSnapshot: {money: 10000, happiness: 50},
             };
         }
 
@@ -1172,7 +1172,8 @@
             if (this.storage) return this.storage;
             const noopStorage = {
                 getItem: () => null,
-                setItem: () => {},
+                setItem: () => {
+                },
             };
             try {
                 if (this.rootWindow?.localStorage) {
@@ -1191,7 +1192,7 @@
             }
         }
 
-        openModal({ body, actions = [{ label: 'Close', primary: true }], dismissible = true }) {
+        openModal({body, actions = [{label: 'Close', primary: true}], dismissible = true}) {
             const doc = this.frameRefs.currentFrameWindow?.document || document;
             if (!this.modal.overlay) {
                 this.modal.overlay = doc.createElement('div');
@@ -1258,16 +1259,16 @@
                 id: 'a1r7',
                 text: 'Month one as Alex. Rent is due and bills are looming. Two gigs are ready if Alex commits.',
                 jobs: [
-                    { label: 'Pull espresso at Skyline Roastery', effect: 'Roastery Pay' },
-                    { label: 'Remote support shifts for Nightline', effect: 'Nightline Support Pay' },
+                    {label: 'Pull espresso at Skyline Roastery', effect: 'Roastery Pay'},
+                    {label: 'Remote support shifts for Nightline', effect: 'Nightline Support Pay'},
                 ],
             },
             {
                 id: 'd8k3',
                 text: 'Alex can reboot their career this month by either managing inventory or testing apps overnight.',
                 jobs: [
-                    { label: 'Warehouse inventory coordinator', effect: 'Inventory Contract' },
-                    { label: 'Beta-test night apps', effect: 'App Beta Income' },
+                    {label: 'Warehouse inventory coordinator', effect: 'Inventory Contract'},
+                    {label: 'Beta-test night apps', effect: 'App Beta Income'},
                 ],
             },
         ];
@@ -1282,11 +1283,11 @@
                         return {
                             label: job.label,
                             next: 'b4m2.html',
-                            econEffect: { name: job.effect, amount },
-                            meta: { economyMeta: { markJob: true } },
+                            econEffect: {name: job.effect, amount},
+                            meta: {economyMeta: {markJob: true}},
                         };
                     });
-                    return { text: config.text, choices };
+                    return {text: config.text, choices};
                 },
             });
         });
@@ -1298,8 +1299,12 @@
                 text: 'The employer portal is asking for a government ID upload before payroll will run.',
                 details: 'Declining only delays everything—modern workplaces expect verification.',
                 choices: [
-                    { label: 'Submit the documents', next: 'c7t9.html', idService: 'WorkGate HR' },
-                    { label: 'Decline (for now)', next: 'c7t9.html', requireModal: 'It would be nice to skip, but Alex has to verify with the employer to stay paid.' },
+                    {label: 'Submit the documents', next: 'c7t9.html', idService: 'WorkGate HR'},
+                    {
+                        label: 'Decline (for now)',
+                        next: 'c7t9.html',
+                        requireModal: 'It would be nice to skip, but Alex has to verify with the employer to stay paid.'
+                    },
                 ],
             }),
         });
@@ -1356,17 +1361,33 @@
             pool: 'core',
             build: () => {
                 const events = [
-                    { story: 'Alex drops their phone in a puddle.', money: utils.weightedBetween(180, 320), happiness: utils.weightedBetween(3, 7) },
-                    { story: 'A surprise dentist bill appears after a lingering toothache.', money: utils.weightedBetween(120, 400), happiness: utils.weightedBetween(2, 5) },
-                    { story: 'A roommate moves out without notice, leaving Alex with costs.', money: utils.weightedBetween(200, 450), happiness: utils.weightedBetween(4, 8) },
+                    {
+                        story: 'Alex drops their phone in a puddle.',
+                        money: utils.weightedBetween(180, 320),
+                        happiness: utils.weightedBetween(3, 7)
+                    },
+                    {
+                        story: 'A surprise dentist bill appears after a lingering toothache.',
+                        money: utils.weightedBetween(120, 400),
+                        happiness: utils.weightedBetween(2, 5)
+                    },
+                    {
+                        story: 'A roommate moves out without notice, leaving Alex with costs.',
+                        money: utils.weightedBetween(200, 450),
+                        happiness: utils.weightedBetween(4, 8)
+                    },
                 ];
                 const hit = utils.pick(events);
                 return {
                     text: hit.story,
                     details: 'Alex can throw money at the problem to soften the blow or push through and absorb the emotional hit.',
                     choices: [
-                        { label: 'Handle it immediately', next: 'e5v1.html', immediate: { money: -hit.money, happiness: -Math.ceil(hit.happiness / 2) } },
-                        { label: 'Ignore it for now', next: 'e5v1.html', immediate: { happiness: -hit.happiness } },
+                        {
+                            label: 'Handle it immediately',
+                            next: 'e5v1.html',
+                            immediate: {money: -hit.money, happiness: -Math.ceil(hit.happiness / 2)}
+                        },
+                        {label: 'Ignore it for now', next: 'e5v1.html', immediate: {happiness: -hit.happiness}},
                     ],
                 };
             },
@@ -1378,8 +1399,8 @@
             build: () => ({
                 text: 'Alex is tired of eating dinner alone. Is it better to meet people face-to-face or download an app?',
                 choices: [
-                    { label: 'Meet people in person', next: 'g6k8.html', meta: { setDatingMethod: 'inperson' } },
-                    { label: 'Download an app', next: 'f9h3.html', meta: { setDatingMethod: 'app' } },
+                    {label: 'Meet people in person', next: 'g6k8.html', meta: {setDatingMethod: 'inperson'}},
+                    {label: 'Download an app', next: 'f9h3.html', meta: {setDatingMethod: 'app'}},
                 ],
             }),
         });
@@ -1392,8 +1413,8 @@
                 return {
                     text: `${app} requires ID verification before Alex can message anyone.`,
                     choices: [
-                        { label: 'Upload the ID', next: 'g6k8.html', idService: app, meta: { setDatingMethod: 'app' } },
-                        { label: 'Skip the app and go offline', next: 'g6k8.html', meta: { setDatingMethod: 'inperson' } },
+                        {label: 'Upload the ID', next: 'g6k8.html', idService: app, meta: {setDatingMethod: 'app'}},
+                        {label: 'Skip the app and go offline', next: 'g6k8.html', meta: {setDatingMethod: 'inperson'}},
                     ],
                 };
             },
@@ -1444,8 +1465,18 @@
                 return {
                     text: 'No matches stuck this month. Loneliness weighs even heavier now.',
                     choices: [
-                        { label: 'Move on alone', next: 'RANDOM', immediate: { happiness: -10 }, meta: { clearDatingMethod: true } },
-                        { label: 'Hangout with a friend', next: 'RANDOM', immediate: { money: -25, happiness: -8 }, meta: { clearDatingMethod: true } },
+                        {
+                            label: 'Move on alone',
+                            next: 'RANDOM',
+                            immediate: {happiness: -10},
+                            meta: {clearDatingMethod: true}
+                        },
+                        {
+                            label: 'Hangout with a friend',
+                            next: 'RANDOM',
+                            immediate: {money: -25, happiness: -8},
+                            meta: {clearDatingMethod: true}
+                        },
                     ],
                 };
             },
@@ -1535,8 +1566,8 @@
                             {
                                 label: 'Join in',
                                 next: 'RANDOM',
-                                immediate: { money: -cost, happiness: happy },
-                                idRequirement: { services: event.providers },
+                                immediate: {money: -cost, happiness: happy},
+                                idRequirement: {services: event.providers},
                             },
                             {
                                 label: 'Skip it',
@@ -1549,8 +1580,8 @@
         });
 
         const badEvents = [
-            { id: 'k8n2', text: 'A radiator bursts in Alex\'s unit.', money: [120, 400], happiness: [3, 7] },
-            { id: 'l5r6', text: 'A close friend moves away unexpectedly.', money: [0, 0], happiness: [4, 9] },
+            {id: 'k8n2', text: 'A radiator bursts in Alex\'s unit.', money: [120, 400], happiness: [3, 7]},
+            {id: 'l5r6', text: 'A close friend moves away unexpectedly.', money: [0, 0], happiness: [4, 9]},
         ];
 
         badEvents.forEach((event) => {
@@ -1563,8 +1594,12 @@
                     return {
                         text: event.text,
                         choices: [
-                            { label: 'Spend to soften it', next: 'RANDOM', immediate: { money: -money, happiness: -Math.ceil(happy / 2) } },
-                            { label: 'Tough it out', next: 'RANDOM', immediate: { happiness: -happy } },
+                            {
+                                label: 'Spend to soften it',
+                                next: 'RANDOM',
+                                immediate: {money: -money, happiness: -Math.ceil(happy / 2)}
+                            },
+                            {label: 'Tough it out', next: 'RANDOM', immediate: {happiness: -happy}},
                         ],
                     };
                 },
@@ -1609,7 +1644,7 @@
                     return {
                         text: offer.text.replace(/\$\$\{cost\}/g, amountLabel),
                         choices: [
-                            { label: 'Skip it', next: 'RANDOM' },
+                            {label: 'Skip it', next: 'RANDOM'},
                             {
                                 label: 'Join the hobby',
                                 next: 'RANDOM',
@@ -1623,7 +1658,7 @@
                                         requiresId: offer.requiresId,
                                     },
                                 },
-                                idRequirement: offer.requiresId ? { services: [offer.provider] } : null,
+                                idRequirement: offer.requiresId ? {services: [offer.provider]} : null,
                             },
                         ].filter(Boolean),
                     };
@@ -1640,8 +1675,18 @@
                 return {
                     text: 'Alex and their partner drift apart and decide to break up.',
                     choices: [
-                        { label: 'Lean on friends', next: 'RANDOM', meta: { removeRelationship: true }, immediate: { money: -20, happiness: -Math.ceil(loss / 2) } },
-                        { label: 'Shut down emotionally', next: 'RANDOM', meta: { removeRelationship: true }, immediate: { happiness: -loss } },
+                        {
+                            label: 'Lean on friends',
+                            next: 'RANDOM',
+                            meta: {removeRelationship: true},
+                            immediate: {money: -20, happiness: -Math.ceil(loss / 2)}
+                        },
+                        {
+                            label: 'Shut down emotionally',
+                            next: 'RANDOM',
+                            meta: {removeRelationship: true},
+                            immediate: {happiness: -loss}
+                        },
                     ],
                 };
             },
@@ -1666,16 +1711,24 @@
                 build: () => ({
                     text: invite.text,
                     choices: [
-                        { label: 'Stay focused solo', next: 'RANDOM' },
-                        { label: 'See where it goes', next: 'r0q9.html', meta: { setPendingRelationship: {} } },
+                        {label: 'Stay focused solo', next: 'RANDOM'},
+                        {label: 'See where it goes', next: 'r0q9.html', meta: {setPendingRelationship: {}}},
                     ],
                 }),
             });
         });
 
         const promotions = [
-            { id: 's9y2', text: 'Work offers Alex a team lead promotion worth $${raise} more each month.', stress: 'Team lead stress' },
-            { id: 'x4f8', text: 'A supervisor wants Alex to run evening operations for $${raise} extra.', stress: 'Operations stress' },
+            {
+                id: 's9y2',
+                text: 'Work offers Alex a team lead promotion worth $${raise} more each month.',
+                stress: 'Team lead stress'
+            },
+            {
+                id: 'x4f8',
+                text: 'A supervisor wants Alex to run evening operations for $${raise} extra.',
+                stress: 'Operations stress'
+            },
         ];
 
         promotions.forEach((promo) => {
@@ -1692,12 +1745,15 @@
                             {
                                 label: 'Accept the promotion',
                                 next: 'RANDOM',
-                                econEffect: { name: 'Promotion bump', amount: raise },
+                                econEffect: {name: 'Promotion bump', amount: raise},
                                 meta: {
-                                    additionalHappinessEffect: Math.random() < 0.25 ? { name: promo.stress, amount: -1 } : null,
+                                    additionalHappinessEffect: Math.random() < 0.25 ? {
+                                        name: promo.stress,
+                                        amount: -1
+                                    } : null,
                                 },
                             },
-                            { label: 'Decline and keep balance', next: 'RANDOM' },
+                            {label: 'Decline and keep balance', next: 'RANDOM'},
                         ],
                     };
                 },
@@ -1713,8 +1769,12 @@
                 return {
                     text: `${hobby.name} now requires ID verification to keep participating.`,
                     choices: [
-                        { label: 'Submit ID to keep it', next: 'RANDOM', meta: { verifyHobby: { hobbyId: hobby.id, provider: hobby.provider } } },
-                        { label: 'Drop the hobby', next: 'RANDOM', meta: { removeHobby: hobby.id } },
+                        {
+                            label: 'Submit ID to keep it',
+                            next: 'RANDOM',
+                            meta: {verifyHobby: {hobbyId: hobby.id, provider: hobby.provider}}
+                        },
+                        {label: 'Drop the hobby', next: 'RANDOM', meta: {removeHobby: hobby.id}},
                     ],
                 };
             },
