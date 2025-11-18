@@ -98,6 +98,10 @@
                 currentFrameWindow: null,
                 lastGameSrc: 'Pages/main.html',
             };
+            this.viewRoot = null;
+            this.activeTarget = 'Pages/main.html';
+            this.pendingGameTarget = 'Pages/main.html';
+            this.viewMode = 'game';
             this.modal = {
                 overlay: null,
                 card: null,
@@ -428,6 +432,35 @@
             ].filter((target) => !!target && typeof target.addEventListener === 'function');
         }
 
+        getViewRoot(doc = document) {
+            if (this.viewRoot && this.viewRoot.ownerDocument === doc) {
+                return this.viewRoot;
+            }
+            const container = doc.getElementById('app-root') || doc.body;
+            this.viewRoot = container;
+            return container;
+        }
+
+        clearView(doc = document) {
+            const container = this.getViewRoot(doc);
+            if (container) {
+                container.innerHTML = '';
+            }
+            return container;
+        }
+
+        renderTemplate(doc, templateId) {
+            const container = this.clearView(doc);
+            if (!container) return null;
+            if (!templateId) return container;
+            const template = doc.getElementById(templateId);
+            if (!template) return container;
+            const fragment = template.content ? template.content.cloneNode(true) : template.cloneNode(true);
+            container.appendChild(fragment);
+            this.applyFooterYear(container);
+            return container;
+        }
+
         buildFooter(doc) {
             const footer = doc.createElement('footer');
             footer.className = 'site-footer';
@@ -447,22 +480,126 @@
         initIndex(win) {
             this.frameRefs.indexWindow = win;
             const doc = win.document;
-            const frame = doc.getElementById('game-frame');
-            this.frameRefs.iframe = frame;
-            const initialSrc = this.normalizeTarget(frame?.getAttribute('src') || this.frameRefs.lastGameSrc || 'Pages/main.html');
+            this.getViewRoot(doc);
+            const initialSrc = this.normalizeTarget(this.frameRefs.lastGameSrc || 'Pages/main.html');
             this.frameRefs.lastGameSrc = initialSrc;
+            this.pendingGameTarget = initialSrc;
+            this.activeTarget = initialSrc;
             this.setAudioThemeByTarget(initialSrc, {force: !this.currentTrack});
             const resizeHandler = () => this.evaluateViewport();
             win.addEventListener('resize', resizeHandler);
+            this.renderVirtualPage(initialSrc);
             this.evaluateViewport();
+        }
+
+        renderVirtualPage(target) {
+            const win = this.frameRefs.indexWindow || root;
+            const doc = win?.document || document;
+            const descriptor = this.describeTarget(target);
+            if (!doc?.body) return;
+
+            this.activeTarget = descriptor.normalized;
+            if (descriptor.page !== 'mobile') {
+                this.pendingGameTarget = descriptor.normalized;
+                this.viewMode = 'game';
+            } else {
+                this.viewMode = 'mobile';
+            }
+
+            doc.body.dataset.page = descriptor.page;
+            if (descriptor.page === 'scenario') {
+                doc.body.dataset.scenario = descriptor.scenarioId || '';
+            } else {
+                delete doc.body.dataset.scenario;
+            }
+            if (descriptor.page === 'identity') {
+                doc.body.dataset.identityStep = descriptor.identityStep || '';
+            } else {
+                delete doc.body.dataset.identityStep;
+            }
+
+            switch (descriptor.page) {
+                case 'main':
+                    this.renderTemplate(doc, 'template-main');
+                    this.initMain(win);
+                    break;
+                case 'learnmore':
+                    this.renderTemplate(doc, 'template-learnmore');
+                    this.initLearnMore(win);
+                    break;
+                case 'credits':
+                    this.renderTemplate(doc, 'template-credits');
+                    this.initCredits(win);
+                    break;
+                case 'scenario': {
+                    const scenarioId = descriptor.scenarioId;
+                    doc.body.dataset.scenario = scenarioId || '';
+                    this.initScenario(win, scenarioId);
+                    break;
+                }
+                case 'identity':
+                    doc.body.dataset.identityStep = descriptor.identityStep || '';
+                    this.renderIdentity(win);
+                    break;
+                case 'nohappiness':
+                    this.initNoHappiness(win);
+                    break;
+                case 'mobile':
+                    this.renderTemplate(doc, 'template-mobile');
+                    this.initMobile(win);
+                    break;
+                default:
+                    this.renderTemplate(doc, 'template-main');
+                    this.initMain(win);
+                    break;
+            }
+        }
+
+        describeTarget(target) {
+            const normalized = this.normalizeTarget(target);
+            const cleaned = normalized.replace(/^Pages\//i, '').replace(/\.html?$/i, '');
+            const info = {
+                normalized,
+                page: 'scenario',
+                scenarioId: '',
+                identityStep: '',
+            };
+
+            if (cleaned === 'main') {
+                info.page = 'main';
+            } else if (cleaned === 'learnmore') {
+                info.page = 'learnmore';
+            } else if (cleaned === 'credits') {
+                info.page = 'credits';
+            } else if (cleaned === 'mobile') {
+                info.page = 'mobile';
+            } else if (cleaned === 'nohappiness') {
+                info.page = 'nohappiness';
+            } else if (/^identitytheft([123])$/i.test(cleaned)) {
+                info.page = 'identity';
+                info.identityStep = cleaned.replace(/^\D+/, '');
+            } else if (this.isScenarioFilename(cleaned)) {
+                info.page = 'scenario';
+                info.scenarioId = cleaned;
+            } else {
+                info.page = 'scenario';
+                info.scenarioId = cleaned;
+            }
+
+            if (info.page === 'scenario' && !info.scenarioId) {
+                info.scenarioId = 'a1r7';
+            }
+
+            return info;
         }
 
         initMain(win) {
             const doc = win.document;
-            const paragraphs = Array.from(doc.querySelectorAll('.intro-paragraph'));
-            const introTitle = doc.querySelector('.intro-title');
-            const footer = doc.querySelector('.intro-footer');
-            const button = doc.querySelector('[data-action="start"]');
+            const scope = this.getViewRoot(doc);
+            const paragraphs = Array.from(scope?.querySelectorAll('.intro-paragraph') || []);
+            const introTitle = scope?.querySelector('.intro-title');
+            const footer = scope?.querySelector('.intro-footer');
+            const button = scope?.querySelector('[data-action="start"]');
 
             introTitle?.setAttribute('data-stage', 'pending');
             footer?.setAttribute('data-stage', 'pending');
@@ -496,17 +633,23 @@
             });
         }
 
-        initScenario(win) {
+        initScenario(win, overrideId) {
             const doc = win.document;
-            const scenarioId = doc.body?.dataset?.scenario;
+            const scenarioId = overrideId || doc.body?.dataset?.scenario;
             if (!scenarioId) {
-                doc.body.innerHTML = '<div class="page-shell"><h1 class="hero-title">Uploaded Life</h1><p>Scenario missing.</p></div>';
+                const host = this.clearView(doc);
+                if (host) {
+                    host.innerHTML = '<div class="page-shell"><h1 class="hero-title">Uploaded Life</h1><p>Scenario missing.</p></div>';
+                }
                 return;
             }
 
             const def = this.scenarios[scenarioId];
             if (!def) {
-                doc.body.innerHTML = '<div class="page-shell"><h1 class="hero-title">Uploaded Life</h1><p>Scenario missing.</p></div>';
+                const host = this.clearView(doc);
+                if (host) {
+                    host.innerHTML = '<div class="page-shell"><h1 class="hero-title">Uploaded Life</h1><p>Scenario missing.</p></div>';
+                }
                 return;
             }
 
@@ -528,20 +671,22 @@
           <p class="scenario-text">Money: ${currency.format(this.state.lastSnapshot?.money ?? this.state.money)} — Happiness: ${Math.round(this.state.lastSnapshot?.happiness ?? this.state.happiness)}%</p>
           <button class="cta-button" data-action="replay">Try Again?</button>
         </div>`;
-            doc.body.innerHTML = '';
-            doc.body.appendChild(shell);
+            const host = this.clearView(doc);
+            host?.appendChild(shell);
             shell.appendChild(this.buildFooter(doc));
-            doc.querySelector('[data-action="replay"]')?.addEventListener('click', () => {
+            const scope = this.getViewRoot(doc);
+            scope?.querySelector('[data-action="replay"]')?.addEventListener('click', () => {
                 this.startNewRun({viaIntro: false});
             });
         }
 
         initLearnMore(win) {
             const doc = win.document;
-            doc.querySelector('[data-action="play-again"]')?.addEventListener('click', () => {
+            const scope = this.getViewRoot(doc);
+            scope?.querySelector('[data-action="play-again"]')?.addEventListener('click', () => {
                 this.startNewRun({viaIntro: false});
             });
-            doc.querySelector('[data-action="share-experience"]')?.addEventListener('click', () => {
+            scope?.querySelector('[data-action="share-experience"]')?.addEventListener('click', () => {
                 const url = 'https://forms.gle/jZhmSs3vRNRfoTeaA';
                 try {
                     win.open(url, '_blank', 'noopener');
@@ -553,21 +698,23 @@
                     }
                 }
             });
-            doc.querySelector('[data-action="open-credits"]')?.addEventListener('click', () => {
+            scope?.querySelector('[data-action="open-credits"]')?.addEventListener('click', () => {
                 this.navigateTo('credits.html');
             });
         }
 
         initCredits(win) {
             const doc = win.document;
-            doc.querySelector('[data-action="credits-back"]')?.addEventListener('click', () => {
+            const scope = this.getViewRoot(doc);
+            scope?.querySelector('[data-action="credits-back"]')?.addEventListener('click', () => {
                 this.navigateTo('learnmore.html');
             });
         }
 
         initMobile(win) {
             const doc = win.document;
-            doc.querySelector('[data-action="resize-check"]')?.addEventListener('click', () => this.evaluateViewport(true));
+            const scope = this.getViewRoot(doc);
+            scope?.querySelector('[data-action="resize-check"]')?.addEventListener('click', () => this.evaluateViewport(true));
         }
 
         renderScenario(win, def, scenarioId) {
@@ -617,8 +764,8 @@
 
             container.appendChild(this.buildFooter(doc));
 
-            doc.body.innerHTML = '';
-            doc.body.appendChild(container);
+            const host = this.clearView(doc);
+            host?.appendChild(container);
             this.refreshHud(hud);
         }
 
@@ -1028,8 +1175,8 @@
             card.appendChild(button);
             shell.appendChild(card);
             shell.appendChild(this.buildFooter(doc));
-            doc.body.innerHTML = '';
-            doc.body.appendChild(shell);
+            const host = this.clearView(doc);
+            host?.appendChild(shell);
         }
 
         startNewRun({viaIntro} = {}) {
@@ -1069,19 +1216,16 @@
 
         navigateTo(target) {
             const resolved = this.normalizeTarget(target);
-            this.frameRefs.lastGameSrc = resolved;
+            if (!resolved) return;
+            if (resolved !== 'Pages/mobile.html') {
+                this.frameRefs.lastGameSrc = resolved;
+                this.pendingGameTarget = resolved;
+            }
             this.setAudioThemeByTarget(resolved);
-            if (this.frameRefs.iframe) {
-                this.frameRefs.iframe.setAttribute('src', resolved);
+            if (this.viewMode === 'mobile' && resolved !== 'Pages/mobile.html') {
                 return;
             }
-            const standaloneTarget = this.standaloneTarget(resolved);
-            const frameWin = this.frameRefs.currentFrameWindow;
-            if (frameWin && frameWin !== root) {
-                frameWin.location.href = standaloneTarget;
-            } else {
-                root.location.href = standaloneTarget;
-            }
+            this.renderVirtualPage(resolved);
         }
 
         normalizeTarget(target) {
@@ -1097,33 +1241,25 @@
             return `Pages/${trimmed}`;
         }
 
-        standaloneTarget(resolved) {
-            if (!resolved?.startsWith('Pages/')) return resolved;
-            const local = resolved.slice('Pages/'.length);
-            if (!local) {
-                return resolved;
+        evaluateViewport(force = false) {
+            if (!this.frameRefs.indexWindow) return;
+            const win = this.frameRefs.indexWindow;
+            const ratio = win.innerWidth / Math.max(1, win.innerHeight);
+            const shouldMobile = ratio < 1.5;
+            if (shouldMobile && this.viewMode !== 'mobile') {
+                this.showMobileOverlay();
+            } else if ((!shouldMobile || force) && this.viewMode === 'mobile') {
+                const target = this.pendingGameTarget || this.frameRefs.lastGameSrc || 'Pages/main.html';
+                this.setAudioThemeByTarget(target, {force: true});
+                this.renderVirtualPage(target);
             }
-            return local;
         }
 
-        evaluateViewport(force = false) {
-            if (!this.frameRefs.iframe || !this.frameRefs.indexWindow) return;
-            const ratio = this.frameRefs.indexWindow.innerWidth / this.frameRefs.indexWindow.innerHeight;
-            const shouldMobile = ratio < 1.5;
-            const current = this.frameRefs.iframe.getAttribute('data-mode');
-            if (shouldMobile && current !== 'mobile') {
-                this.frameRefs.iframe.setAttribute('data-mode', 'mobile');
-                const prevSrc = this.frameRefs.iframe.getAttribute('src') || this.frameRefs.lastGameSrc || 'Pages/main.html';
-                this.frameRefs.iframe.setAttribute('data-prev-src', prevSrc);
-                const mobileSrc = 'Pages/mobile.html';
-                this.setAudioThemeByTarget(mobileSrc);
-                this.frameRefs.iframe.setAttribute('src', mobileSrc);
-            } else if ((!shouldMobile || force) && current === 'mobile') {
-                this.frameRefs.iframe.setAttribute('data-mode', 'game');
-                const prev = this.frameRefs.iframe.getAttribute('data-prev-src') || this.frameRefs.lastGameSrc || 'Pages/main.html';
-                this.setAudioThemeByTarget(prev);
-                this.frameRefs.iframe.setAttribute('src', prev);
-            }
+        showMobileOverlay() {
+            const mobileSrc = 'Pages/mobile.html';
+            this.viewMode = 'mobile';
+            this.setAudioThemeByTarget(mobileSrc);
+            this.renderVirtualPage(mobileSrc);
         }
 
         loadState() {
