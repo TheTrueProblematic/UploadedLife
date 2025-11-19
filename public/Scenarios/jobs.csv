@@ -1,5 +1,41 @@
 group,label,effect
-first-month-a,Pull espresso at Skyline Roastery,Roastery Pay
-first-month-a,Remote support shifts for Nightline,Nightline Support Pay
-first-month-b,Warehouse inventory coordinator,Inventory Contract
-first-month-b,Beta-test night apps,App Beta Income
+first-month-a,Craft espresso shots at Skyline Roastery,Roastery Pay
+first-month-a,Answer customer support tickets for Nightline,Nightline Support Pay
+first-month-a,Tend bar at The Velvet Hour downtown,Bar Tips & Wages
+first-month-a,Walk dogs through the neighborhood with PawPatrol,Dog Walking Income
+first-month-a,Deliver groceries for FreshCart on your bike,Delivery Gig Pay
+first-month-a,Freelance graphic design on FlexWork,Design Project Income
+first-month-a,Teach English online to students in Seoul,Teaching Platform Pay
+first-month-a,Drive for RideShare during evening rush,Rideshare Earnings
+first-month-a,Stock shelves at the 24-hour QuickMart,Overnight Stocking Pay
+first-month-a,Photograph events on weekends for Snapshot Studios,Photography Gig Income
+first-month-a,Write product descriptions for e-commerce sites,Copywriting Contract
+first-month-a,Transcribe legal recordings for TranscribePro,Transcription Pay
+first-month-a,Bake pastries for the farmers’ market stand,Baking Income
+first-month-a,Lead fitness classes at Community Wellness,Instructor Pay
+first-month-a,Paint houses with the SunnyDay crew,House Painting Wages
+first-month-a,Answer phones at Dr. Morrison’s dental office,Receptionist Pay
+first-month-a,Edit videos for local businesses and YouTubers,Video Editing Income
+first-month-a,Tutor high school students in math and science,Tutoring Pay
+first-month-a,Landscape gardens with GreenScape Services,Landscaping Wages
+first-month-a,Sell handmade crafts on ArtisanMarket online,Craft Sales Income
+first-month-b,Coordinate warehouse inventory for LogiFlow,Inventory Contract
+first-month-b,Beta-test mobile apps through the night,App Beta Income
+first-month-b,Moderate content for SocialGuard platform,Moderation Contract
+first-month-b,Translate documents for GlobalBridge Services,Translation Pay
+first-month-b,Assemble furniture for customers with BuildHelp,Assembly Gig Wages
+first-month-b,Manage social media for small businesses,Social Media Contract
+first-month-b,Repair bicycles at the Spoke & Wheel co-op,Bike Repair Income
+first-month-b,Work overnight security at the Pearl Street plaza,Security Guard Pay
+first-month-b,Input data for research teams at DataEntry Pro,Data Entry Wages
+first-month-b,Install home theater systems with TechSetup,Installation Pay
+first-month-b,Test websites for usability bugs remotely,UX Testing Income
+first-month-b,Assist with moving jobs on weekends,Moving Helper Wages
+first-month-b,Organize closets and homes for ClutterFree,Organization Service Pay
+first-month-b,Develop simple websites on CodeForHire,Web Dev Contract
+first-month-b,Pet-sit for vacationing neighbors,Pet Sitting Income
+first-month-b,Proofread manuscripts for indie publishers,Proofreading Pay
+first-month-b,Install solar panels with SunPower Collective,Solar Installation Wages
+first-month-b,Mystery shop restaurants and retail stores,Mystery Shopping Pay
+first-month-b,Voice act for audiobooks and commercials,Voice Work Income
+first-month-b,Clean homes with SparkleTeam Services,Housecleaning Wages

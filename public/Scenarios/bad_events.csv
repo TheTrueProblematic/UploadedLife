@@ -1,3 +1,21 @@
 id,text,moneyMin,moneyMax,happinessMin,happinessMax
-k8n2,"A radiator bursts in Alex's unit.",120,400,3,7
-l5r6,"A close friend moves away unexpectedly.",0,0,4,9
+k8n2,“Alex wakes to a hissing sound and a growing puddle. The radiator has burst, spraying rusty water across the floor. The landlord’s number goes straight to voicemail.”,120,400,3,7
+l5r6,“The text arrives without warning: ‘I got the job—I’m moving across the country next week.’ A close friend, suddenly gone. The apartment feels quieter already.”,0,0,4,9
+m7n3,“The check engine light has been on for weeks, but now the car won’t start at all. The tow truck driver shakes their head knowingly. This is going to hurt.”,200,650,4,8
+o2p8,“Alex’s beloved childhood dog crosses the rainbow bridge after a long, good life. The vet is kind, the decision was right, but the house feels unbearably empty.”,0,0,7,12
+q9r4,“An unexpected tax bill arrives in the mail. Apparently Alex miscalculated something last year, and the IRS would like to discuss it. With penalties.”,150,550,3,6
+s1t6,“The upstairs neighbor’s bathtub overflows in the middle of the night, creating a waterfall through Alex’s ceiling. The landlord promises to fix it ‘eventually.’”,80,300,3,6
+u8v2,“Alex’s favorite coffee shop—the one with the perfect corner booth and the barista who knows their order—is closing permanently. A chain store is moving in.”,0,0,2,5
+w4x9,“Someone breaks into Alex’s car and steals the stereo, leaving shattered glass on the driver’s seat. Nothing else was taken, just the one thing that made commutes bearable.”,120,350,3,7
+y5z1,“The promotion Alex was promised goes to someone else—someone newer, with better connections. The explanation is corporate speak for ‘sorry, not sorry.’”,0,0,4,8
+a6b3,“A family member calls with bad news about a health diagnosis. Everything else suddenly feels trivial and far away.”,0,0,5,10
+c8d2,“The landlord announces a rent increase that’s technically legal but practically devastating. Alex has 60 days to decide: pay more or move.”,0,0,4,9
+e1f7,“Alex’s bike gets hit by a car while parked. The driver didn’t leave a note, just a crumpled frame and bent wheels.”,150,400,3,6
+g3h9,“A beloved pet gets sick suddenly. The emergency vet saves their life, but Alex’s savings account takes a critical hit.”,200,750,5,9
+i5j4,“The company announces layoffs. Alex survives the cut, but three close work friends don’t. Survivor’s guilt sets in during the awkward goodbye drinks.”,0,0,3,7
+k2l8,“Someone steals Alex’s package from the porch—the one with the birthday gift for their sibling. No insurance, no replacement, just disappointment.”,40,150,2,4
+m6n1,“The power goes out during a heatwave, and everything in the fridge spoils before the electricity comes back. The smell is unforgettable.”,60,180,2,5
+o9p7,“Alex discovers their identity was used to open a credit card. Hours on hold with fraud departments and credit bureaus follow.”,0,0,4,8
+q4r3,“A long-term relationship ends not with drama but with a tired conversation about growing apart. It’s mutual, it’s civil, and it’s absolutely heartbreaking.”,0,0,5,11
+s7t2,“The favorite local bookstore where Alex spent countless hours announces it’s closing. Another community space lost to rising rents.”,0,0,3,6
+u1v6,“A work project Alex poured months into gets cancelled due to ‘shifting priorities.’ All that effort, just gone.”,0,0,4,7
