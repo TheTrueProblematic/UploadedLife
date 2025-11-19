@@ -644,23 +644,46 @@
             const doc = win.document;
             const scenarioId = overrideId || doc.body?.dataset?.scenario;
             if (!scenarioId) {
-                const host = this.clearView(doc);
-                if (host) {
-                    host.innerHTML = '<div class="page-shell"><h1 class="hero-title">Uploaded Life</h1><p>Scenario missing.</p></div>';
-                }
+                this.renderMissingScenario(doc, '');
                 return;
             }
 
             const def = this.scenarios[scenarioId];
             if (!def) {
-                const host = this.clearView(doc);
-                if (host) {
-                    host.innerHTML = '<div class="page-shell"><h1 class="hero-title">Uploaded Life</h1><p>Scenario missing.</p></div>';
-                }
+                this.renderMissingScenario(doc, scenarioId);
                 return;
             }
 
             this.renderScenario(win, def, scenarioId);
+        }
+
+        renderMissingScenario(doc, scenarioId) {
+            const host = this.clearView(doc);
+            if (!host) return;
+            const lastTarget = this.frameRefs?.lastGameSrc || '';
+            const parts = [
+                '<div class="page-shell missing-scenario-shell">',
+                '<h1 class="hero-title">Uploaded Life</h1>',
+                '<div class="scenario-card">',
+                '<p class="scenario-text">Scenario missing. Please refresh or report this ID.</p>',
+            ];
+            if (scenarioId) {
+                parts.push(`<p class="scenario-text">Requested scenario: <code>${scenarioId}</code></p>`);
+            }
+            if (lastTarget) {
+                parts.push(`<p class="scenario-text">Last target: <code>${lastTarget}</code></p>`);
+            }
+            parts.push('<button class="cta-button" data-action="refresh-game">Reload</button>');
+            parts.push('</div>');
+            parts.push('</div>');
+            host.innerHTML = parts.join('');
+            host.querySelector('[data-action="refresh-game"]')?.addEventListener('click', () => {
+                try {
+                    this.rootWindow.location.reload();
+                } catch (err) {
+                    window.location.reload();
+                }
+            });
         }
 
         initIdentity(win) {
@@ -994,6 +1017,9 @@
             if (target === 'RANDOM') {
                 const nextId = this.pickRandomScenario();
                 target = `${nextId}.html`;
+            } else if (target === 'RANDOM_BAD') {
+                const nextId = this.pickScenarioByType('badEvent');
+                target = `${nextId}.html`;
             }
 
             if (!target) {
@@ -1216,6 +1242,15 @@
             const def = utils.pick(available);
             this.recordRandomVisit(def.id);
             return def.id;
+        }
+
+        pickScenarioByType(targetType) {
+            const pool = Object.values(this.scenarios).filter((def) => def.scenarioType === targetType && (!def.eligible || def.eligible(this.state)));
+            if (!pool.length) {
+                return this.pickRandomScenario();
+            }
+            const def = utils.pick(pool);
+            return def?.id || this.pickRandomScenario();
         }
 
         recordRandomVisit(id) {
@@ -1460,7 +1495,23 @@
 
 
     async function buildScenarioLibrary(utils) {
-        const dataset = await loadDataset('Scenarios/library.json', 'scenario library');
+        const fallbackLibrary = cloneData(
+            root.__uploadedLifeEmbeddedLibrary
+            || window.__uploadedLifeEmbeddedLibrary
+            || null,
+        );
+
+        let dataset;
+        try {
+            dataset = await loadDataset('Resources/library.json', 'scenario library');
+        } catch (err) {
+            if (fallbackLibrary) {
+                console.warn('Uploaded Life: using embedded library fallback', err);
+                dataset = fallbackLibrary;
+            } else {
+                throw err;
+            }
+        }
 
         const scenarioRows = requireRows(dataset?.scenarios, 'scenario data', (row) => row?.id && row?.type);
         const jobRows = requireRows(
@@ -1489,6 +1540,8 @@
             'hobby offers',
             (row) => row?.id && row?.provider,
         );
+
+        const jobChoiceModule = root.UploadedLifeJobChoices || {};
 
         const jobsByGroup = jobRows.reduce((acc, job) => {
             const group = (job.group || '').trim();
@@ -1535,6 +1588,7 @@
             happiness: [toNumber(row.happinessMin, 0), toNumber(row.happinessMax, 0)],
             requiresId: parseBoolean(row.requiresId),
         }));
+        const hobbyOfferList = Object.values(hobbyOfferMap);
 
         const library = {};
         const add = (def) => {
@@ -1618,14 +1672,16 @@
 
         function createScenarioDefinition(row, config) {
             const type = (row.type || '').trim();
+            let definition = null;
             switch (type) {
                 case 'jobSelection':
-                    return {
+                    definition = {
                         id: row.id,
                         pool: row.pool,
                         build: () => {
                             const jobEntries = jobsByGroup[config.jobGroup] || [];
-                            const choices = jobEntries.map((job) => {
+                            const picks = selectJobEntries(jobEntries, 2);
+                            const choices = picks.map((job) => {
                                 const amount = utils.weightedBetween(1100, 1500);
                                 return {
                                     label: job.label,
@@ -1641,8 +1697,23 @@
                             };
                         },
                     };
+                    break;
+                case 'event':
+                    definition = {
+                        id: row.id,
+                        pool: row.pool,
+                        build: () => ({
+                            text: row.text,
+                            details: row.details || undefined,
+                            choices: [{
+                                label: 'Keep going',
+                                next: config.next || 'RANDOM',
+                            }],
+                        }),
+                    };
+                    break;
                 case 'static':
-                    return {
+                    definition = {
                         id: row.id,
                         pool: row.pool,
                         build: () => ({
@@ -1651,24 +1722,47 @@
                             choices: cloneData(config.choices || []),
                         }),
                     };
+                    break;
                 case 'hobbyStarter':
-                    return {
+                    definition = {
                         id: row.id,
                         pool: row.pool,
                         build: () => {
-                            const options = Array.isArray(config.options) ? config.options : [];
+                            let options = Array.isArray(config.options) ? config.options : [];
+                            if ((config.dataSource || '').toLowerCase() === 'hobbyoffers') {
+                                const count = Number(config.optionCount) || 2;
+                                const entries = selectRandomEntries(hobbyOfferList, count);
+                                options = entries.map((entry) => ({
+                                    key: entry.id,
+                                    label: entry.provider || entry.text || entry.id,
+                                    description: entry.text || '',
+                                    next: config.next || 'RANDOM',
+                                    costRange: entry.cost,
+                                    happinessRange: entry.happiness,
+                                    hobby: {
+                                        hobbyId: entry.id,
+                                        costLabel: entry.text || entry.provider || entry.id,
+                                        happyLabel: entry.provider || entry.id,
+                                        provider: entry.provider || entry.id,
+                                        requiresId: entry.requiresId,
+                                    },
+                                }));
+                            }
                             const placeholders = {};
-                            const choices = options.map((option) => {
+                            const choices = options.map((option, index) => {
                                 const cost = generateRangeValue(option.costRange);
                                 const happiness = generateRangeValue(option.happinessRange);
-                                const key = option.key ? `${option.key}Cost` : null;
+                                const key = option.key ? `${option.key}Cost` : `option${index + 1}Cost`;
                                 if (key) {
                                     placeholders[key] = currency.format(cost);
                                 }
                                 const hobbyMeta = option.hobby ? {...option.hobby} : {};
+                                const labelText = option.description
+                                    ? replacePlaceholders(option.description, {cost: currency.format(cost)})
+                                    : option.label;
                                 const choice = {
-                                    label: option.label,
-                                    next: option.next || 'RANDOM',
+                                    label: labelText || option.label || 'Pick this hobby',
+                                    next: option.next || config.next || 'RANDOM',
                                     meta: {
                                         addHobby: {
                                             ...hobbyMeta,
@@ -1689,8 +1783,9 @@
                             };
                         },
                     };
+                    break;
                 case 'incidentChoice':
-                    return {
+                    definition = {
                         id: row.id,
                         pool: row.pool,
                         build: () => {
@@ -1726,8 +1821,9 @@
                             };
                         },
                     };
+                    break;
                 case 'datingApp':
-                    return {
+                    definition = {
                         id: row.id,
                         pool: row.pool,
                         build: () => {
@@ -1757,8 +1853,9 @@
                             };
                         },
                     };
+                    break;
                 case 'relationshipOutcome':
-                    return {
+                    definition = {
                         id: row.id,
                         pool: row.pool,
                         build: (state = {}) => {
@@ -1780,8 +1877,9 @@
                             };
                         },
                     };
+                    break;
                 case 'pendingRelationship':
-                    return {
+                    definition = {
                         id: row.id,
                         pool: row.pool,
                         build: () => ({
@@ -1790,8 +1888,9 @@
                             choices: cloneData(config.choices || []),
                         }),
                     };
+                    break;
                 case 'goodEvent':
-                    return {
+                    definition = {
                         id: row.id,
                         pool: row.pool,
                         build: () => {
@@ -1821,8 +1920,9 @@
                             };
                         },
                     };
+                    break;
                 case 'badEvent':
-                    return {
+                    definition = {
                         id: row.id,
                         pool: row.pool,
                         build: () => {
@@ -1848,8 +1948,9 @@
                             };
                         },
                     };
+                    break;
                 case 'hobbyOffer':
-                    return {
+                    definition = {
                         id: row.id,
                         pool: row.pool,
                         build: () => {
@@ -1915,8 +2016,9 @@
                             };
                         },
                     };
+                    break;
                 case 'relationshipInvite':
-                    return {
+                    definition = {
                         id: row.id,
                         pool: row.pool,
                         eligible: (state) => !state.relationship,
@@ -1929,8 +2031,9 @@
                             ],
                         }),
                     };
+                    break;
                 case 'promotionOffer':
-                    return {
+                    definition = {
                         id: row.id,
                         pool: row.pool,
                         build: () => {
@@ -1954,8 +2057,9 @@
                             };
                         },
                     };
+                    break;
                 case 'hobbyVerification':
-                    return {
+                    definition = {
                         id: row.id,
                         pool: row.pool,
                         eligible: (state) => (state.hobbies || []).some((hobby) => hobby.requiresId && !hobby.idSubmitted),
@@ -1979,10 +2083,49 @@
                             };
                         },
                     };
+                    break;
                 default:
                     console.warn(`Uploaded Life: unknown scenario type "${type}" for ${row.id}`);
-                    return null;
+                    definition = null;
+                    break;
             }
+            if (!definition) {
+                return null;
+            }
+            return {...definition, scenarioType: type};
+        }
+
+        function selectJobEntries(entries, limit = 2) {
+            if (!entries || !entries.length) {
+                return [];
+            }
+            if (typeof jobChoiceModule.selectRandomJobs === 'function') {
+                return jobChoiceModule.selectRandomJobs(entries, limit);
+            }
+            return selectRandomJobsFallback(entries, limit);
+        }
+
+        function selectRandomJobsFallback(entries, limit) {
+            const pool = entries.slice();
+            const picks = [];
+            while (pool.length && picks.length < limit) {
+                const index = Math.floor(Math.random() * pool.length);
+                picks.push(pool.splice(index, 1)[0]);
+            }
+            return picks;
+        }
+
+        function selectRandomEntries(entries, limit = 2) {
+            if (!entries || !entries.length) {
+                return [];
+            }
+            const pool = entries.slice();
+            const picks = [];
+            while (pool.length && picks.length < limit) {
+                const index = Math.floor(Math.random() * pool.length);
+                picks.push(pool.splice(index, 1)[0]);
+            }
+            return picks;
         }
     }
 

@@ -47,62 +47,66 @@
       "id": "c7t9",
       "pool": "core",
       "type": "hobbyStarter",
-      "text": "Life can’t just be work and sleep on repeat. Alex scrolls through options: a streaming bundle for {{streamingCost}}/month promises endless stories and escapes, while a bowling league at {{bowlingCost}}/month offers real people, flying pins, and the smell of lane wax.",
-      "details": "One’s a cozy couch ritual. The other’s Thursday nights with strangers who might become friends.",
+      "text": "Life can’t just be work and sleep on repeat. Two totally different hobbies pop up in Alex’s feed—each with its own price tag and promised happiness boost.",
+      "details": "Whichever path Alex picks, it should feel like a treat. The question is which vibe fits the month.",
+      "config": {
+        "dataSource": "hobbyOffers",
+        "optionCount": 2,
+        "next": "e5v1.html"
+      }
+    },
+    {
+      "id": "d2q5",
+      "pool": "random",
+      "type": "hobbyStarter",
+      "text": "But wait—there’s more to life than just one hobby. A community garden plot just opened up, promising dirt under the fingernails and homegrown tomatoes. Meanwhile, a D&D group is recruiting for their next campaign, complete with dice-rolling drama and epic quests.",
+      "details": "One hobby roots Alex in soil, the other in stories. Both help shake off the grind.",
       "config": {
         "options": [
           {
-            "key": "streaming",
-            "label": "Dive into the streaming world",
-            "next": "d2q5.html",
+            "key": "gardening",
+            "label": "Claim that garden plot",
+            "next": "RANDOM",
             "costRange": [
-              12,
-              22
-            ],
-            "happinessRange": [
-              1,
-              3
-            ],
-            "hobby": {
-              "hobbyId": "streaming",
-              "costLabel": "Stream bundle subscription",
-              "happyLabel": "Weekly story binge",
-              "provider": "StreamDump"
-            }
-          },
-          {
-            "key": "bowling",
-            "label": "Lace up those rental shoes",
-            "next": "d2q5.html",
-            "costRange": [
-              25,
-              45
+              10,
+              20
             ],
             "happinessRange": [
               2,
-              5
+              6
             ],
             "hobby": {
-              "hobbyId": "bowling",
-              "costLabel": "Bowling league dues",
-              "happyLabel": "League night vibes",
-              "provider": "Lucky Strike Lanes"
+              "hobbyId": "gardening",
+              "costLabel": "Garden supplies",
+              "happyLabel": "Homegrown harvest",
+              "provider": "GreenThumb Co-op"
+            }
+          },
+          {
+            "key": "dnd",
+            "label": "Roll for initiative!",
+            "next": "RANDOM",
+            "costRange": [
+              5,
+              15
+            ],
+            "happinessRange": [
+              3,
+              7
+            ],
+            "hobby": {
+              "hobbyId": "dnd",
+              "costLabel": "Dice and snacks",
+              "happyLabel": "Dungeon crawling",
+              "provider": "Basement Heroes"
             }
           }
         ]
       }
     },
     {
-      "id": "d2q5",
-      "pool": "core",
-      "type": "hobbyStarter",
-      "text": "But wait—there’s more to life than just one hobby. A community garden plot just opened up, promising dirt under the fingernails and homegrown tomatoes. Meanwhile, a D&D group is recruiting for their next campaign, complete with dice-rolling drama and epic quests.,,{options:[{key:gardening",
-      "details": "label:Claim that garden plot",
-      "config": {}
-    },
-    {
       "id": "e3z8",
-      "pool": "core",
+      "pool": "random",
       "type": "static",
       "text": "Morning disaster: the toaster sparks like a tiny firework show, then goes silent forever. Alex stares at their un-toasted bread.",
       "details": "There’s the sensible option—grab something cheap and functional. Or there’s the fantasy option—a gleaming, feature-packed model that’ll make breakfast feel like an event.",
@@ -110,12 +114,12 @@
         "choices": [
           {
             "label": "Keep it simple and cheap",
-            "next": "f9p1.html",
+            "next": "RANDOM",
             "cost": 30
           },
           {
             "label": "Treat yourself to the fancy model",
-            "next": "f9p1.html",
+            "next": "RANDOM",
             "cost": 120,
             "happiness": 2
           }
@@ -124,22 +128,127 @@
     },
     {
       "id": "f9p1",
-      "pool": "core",
+      "pool": "random",
       "type": "event",
       "text": "The week dissolves in a blur of routines and small victories. Sunday evening arrives with that familiar feeling—another week down, another week ahead.",
       "details": "",
       "config": {
-        "next": "g2l6.html"
+        "next": "RANDOM"
       }
     },
     {
       "id": "g2l6",
-      "pool": "core",
+      "pool": "random",
       "type": "event",
       "text": "Days blend together like watercolors. Coffee, work, home, sleep, repeat. Then suddenly it’s Friday again, and Alex wonders where the time went.",
       "details": "",
       "config": {
-        "next": "h1k4"
+        "next": "RANDOM"
+      }
+    },
+    {
+      "id": "e5v1",
+      "pool": "core",
+      "type": "static",
+      "text": "Alex is tired of eating dinner alone. Is it better to meet people face-to-face or download an app?",
+      "details": "Both paths could work, but only one gets energy this month.",
+      "config": {
+        "choices": [
+          {
+            "label": "Meet people in person",
+            "next": "g6k8.html",
+            "meta": {
+              "setDatingMethod": "inperson"
+            }
+          },
+          {
+            "label": "Download an app",
+            "next": "f9h3.html",
+            "meta": {
+              "setDatingMethod": "app"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "f9h3",
+      "pool": "core",
+      "type": "datingApp",
+      "text": "{{app}} requires ID verification before Alex can message anyone.",
+      "details": "",
+      "config": {
+        "apps": [
+          "HeartMatch",
+          "Kindred",
+          "PulseDate"
+        ],
+        "next": "g6k8.html"
+      }
+    },
+    {
+      "id": "g6k8",
+      "pool": "core",
+      "type": "relationshipOutcome",
+      "text": "",
+      "details": "",
+      "config": {
+        "successTextApp": "Alex found someone! Thanks to the app, dates are now happening.",
+        "successTextInperson": "Alex found someone! Thanks to chance meetings, dates are now happening.",
+        "failureText": "No matches stuck this month. Loneliness weighs even heavier now.",
+        "successChoices": [
+          {
+            "label": "Go out occasionally",
+            "next": "RANDOM_BAD",
+            "meta": {
+              "applyRelationship": {
+                "costLabel": "Occasional date nights",
+                "monthlyCost": 25,
+                "happyLabel": "Shared connection",
+                "happinessBoost": 2,
+                "frequency": "occasional"
+              },
+              "clearDatingMethod": true
+            }
+          },
+          {
+            "label": "Go out frequently",
+            "next": "RANDOM_BAD",
+            "meta": {
+              "applyRelationship": {
+                "costLabel": "Frequent date nights",
+                "monthlyCost": 75,
+                "happyLabel": "Romantic whirlwind",
+                "happinessBoost": 4,
+                "frequency": "frequent"
+              },
+              "clearDatingMethod": true
+            }
+          }
+        ],
+        "failureChoices": [
+          {
+            "label": "Move on alone",
+            "next": "RANDOM_BAD",
+            "immediate": {
+              "happiness": -10
+            },
+            "meta": {
+              "clearDatingMethod": true
+            }
+          },
+          {
+            "label": "Hangout with a friend",
+            "next": "RANDOM_BAD",
+            "immediate": {
+              "money": -25,
+              "happiness": -8
+            },
+            "meta": {
+              "clearDatingMethod": true
+            }
+          }
+        ]
       }
     },
     {
@@ -245,6 +354,43 @@
       "details": "",
       "config": {
         "next": "r0q9.html"
+      }
+    },
+    {
+      "id": "r0q9",
+      "pool": "auxiliary",
+      "type": "pendingRelationship",
+      "text": "How often should Alex go out with this new partner?",
+      "details": "",
+      "config": {
+        "choices": [
+          {
+            "label": "Keep it occasional",
+            "next": "RANDOM",
+            "meta": {
+              "completePendingRelationship": {
+                "costLabel": "Occasional outings",
+                "monthlyCost": 25,
+                "happyLabel": "Steady partnership",
+                "happinessBoost": 2,
+                "frequency": "occasional"
+              }
+            }
+          },
+          {
+            "label": "Dive in fully",
+            "next": "RANDOM",
+            "meta": {
+              "completePendingRelationship": {
+                "costLabel": "Frequent outings",
+                "monthlyCost": 75,
+                "happyLabel": "Intense partnership",
+                "happinessBoost": 4,
+                "frequency": "frequent"
+              }
+            }
+          }
+        ]
       }
     },
     {

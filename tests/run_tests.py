@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 import re
 import unittest
+import json
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_DIR = PROJECT_ROOT / "public"
 INDEX_HTML = PUBLIC_DIR / "index.html"
 SCRIPTS_JS = PUBLIC_DIR / "scripts.js"
-LIBRARY_JSON = PUBLIC_DIR / "Scenarios" / "library.json"
+LIBRARY_JSON = PUBLIC_DIR / "Resources" / "library.json"
+LIBRARY_EMBED = PUBLIC_DIR / "Resources" / "library-embedded.js"
 
 
 class SiteStructureTests(unittest.TestCase):
@@ -33,7 +35,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIsNotNone(pattern.search(self.html), msg="template-main definition missing")
 
     def test_library_json_contains_datasets(self):
-        self.assertTrue(LIBRARY_JSON.exists(), msg="public/Scenarios/library.json missing")
+        self.assertTrue(LIBRARY_JSON.exists(), msg="public/Resources/library.json missing")
         data = LIBRARY_JSON.read_text(encoding="utf-8")
         self.assertIn('"scenarios": [', data, msg="library.json missing scenarios array")
         self.assertIn('"jobs": [', data, msg="library.json missing jobs array")
@@ -41,6 +43,18 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('"goodEvents": [', data, msg="library.json missing goodEvents array")
         self.assertIn('"badEvents": [', data, msg="library.json missing badEvents array")
         self.assertIn('"hobbyOffers": [', data, msg="library.json missing hobbyOffers array")
+
+    def test_embedded_library_matches_json(self):
+        self.assertTrue(LIBRARY_EMBED.exists(), msg="public/Resources/library-embedded.js missing")
+        prefix = "window.__uploadedLifeEmbeddedLibrary = "
+        text = LIBRARY_EMBED.read_text(encoding="utf-8").strip()
+        self.assertIn(prefix, text, msg="library-embedded.js should assign to window.__uploadedLifeEmbeddedLibrary")
+        payload = text.split(prefix, 1)[1]
+        if payload.endswith(";"):
+            payload = payload[:-1]
+        json_data = json.loads(LIBRARY_JSON.read_text(encoding="utf-8"))
+        embedded_data = json.loads(payload)
+        self.assertEqual(embedded_data, json_data, msg="library-embedded.js is out of sync with library.json (run node scripts/sync-library.js)")
 
     def test_host_initializes_before_scenario_promise(self):
         host_index = self.scripts.find("new UploadedLifeHost")
@@ -77,7 +91,7 @@ class SiteStructureTests(unittest.TestCase):
 
     def test_script_references_library_json(self):
         self.assertIn(
-            "Scenarios/library.json",
+            "Resources/library.json",
             self.scripts,
             msg="scripts.js should load the consolidated library.json dataset",
         )
