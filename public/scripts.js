@@ -81,6 +81,33 @@
         }
     })();
 
+    const COST_MULTIPLIER = 2;
+    const HAPPINESS_GAIN_MULTIPLIER = 0.5;
+
+    function applyCostIncrease(value) {
+        const amount = Number(value) || 0;
+        if (!amount) {
+            return 0;
+        }
+        return amount > 0 ? amount * COST_MULTIPLIER : amount;
+    }
+
+    function applyHappinessGain(value) {
+        const amount = Number(value) || 0;
+        if (amount > 0) {
+            return amount * HAPPINESS_GAIN_MULTIPLIER;
+        }
+        return amount;
+    }
+
+    function adjustMoneyDelta(delta) {
+        const amount = Number(delta) || 0;
+        if (amount < 0) {
+            return amount * COST_MULTIPLIER;
+        }
+        return amount;
+    }
+
 
 
     const scenarioLibraryPromise = buildScenarioLibrary(utils);
@@ -926,7 +953,18 @@
 
         commitChoice(choice) {
             this.pendingChoiceMeta = choice.meta || null;
-            this.pendingImmediate = choice.immediate || null;
+            if (choice.immediate) {
+                const normalized = {...choice.immediate};
+                if (typeof normalized.money !== 'undefined') {
+                    normalized.money = adjustMoneyDelta(normalized.money);
+                }
+                if (typeof normalized.happiness !== 'undefined') {
+                    normalized.happiness = applyHappinessGain(normalized.happiness);
+                }
+                this.pendingImmediate = normalized;
+            } else {
+                this.pendingImmediate = null;
+            }
             const econ = choice.econEffect || {};
             const happy = choice.happinessEffect || {};
             const next = choice.next || '';
@@ -1059,7 +1097,7 @@
             const effect = {
                 id: meta.id || `hap-${Math.random().toString(36).slice(2, 7)}`,
                 name,
-                amount,
+                amount: applyHappinessGain(amount),
                 meta,
             };
             this.state.happinessEffects.push(effect);
@@ -1068,16 +1106,18 @@
         addHobby(config) {
             this.state.hobbies = this.state.hobbies || [];
             const hobbyId = config.hobbyId || `hob-${Math.random().toString(36).slice(2, 6)}`;
+            const monthlyCost = applyCostIncrease(Math.abs(config.monthlyCost || 0));
+            const happinessBoost = applyHappinessGain(config.happinessBoost);
             const econEffect = {
                 id: `hobeco-${hobbyId}`,
                 name: config.costLabel,
-                amount: -Math.abs(config.monthlyCost),
+                amount: -monthlyCost,
                 meta: {hobbyId},
             };
             const happyEffect = {
                 id: `hobhap-${hobbyId}`,
                 name: config.happyLabel,
-                amount: config.happinessBoost,
+                amount: happinessBoost,
                 meta: {hobbyId, requiresId: config.requiresId},
             };
             this.state.economyEffects.push(econEffect);
@@ -1112,15 +1152,17 @@
         applyRelationship(config) {
             this.removeRelationship();
             if (!config) return;
+            const monthlyCost = applyCostIncrease(Math.abs(config.monthlyCost || 0));
+            const happinessBoost = applyHappinessGain(config.happinessBoost);
             const econEffect = {
                 id: `rel-eco-${Math.random().toString(36).slice(2, 6)}`,
                 name: config.costLabel,
-                amount: -Math.abs(config.monthlyCost),
+                amount: -monthlyCost,
             };
             const happyEffect = {
                 id: `rel-hap-${Math.random().toString(36).slice(2, 6)}`,
                 name: config.happyLabel,
-                amount: config.happinessBoost,
+                amount: happinessBoost,
             };
             this.state.economyEffects.push(econEffect);
             this.state.happinessEffects.push(happyEffect);
@@ -1154,6 +1196,10 @@
         }
 
         triggerIdentityTheft() {
+            this.state.identitySnapshot = {
+                moneyBefore: this.state.money,
+                happinessBefore: this.state.happiness,
+            };
             this.state.identityLock = true;
             this.state.money = -50000;
             this.state.economyEffects = [];
@@ -1178,6 +1224,13 @@
             details.className = 'scenario-text';
             let buttonLabel = 'Continue';
             let target = 'identitytheft2.html';
+            const snapshot = this.state.identitySnapshot || {};
+            const beforeMoney = typeof snapshot.moneyBefore === 'number'
+                ? snapshot.moneyBefore
+                : (this.state.lastSnapshot?.money ?? this.state.money);
+            const beforeHappiness = typeof snapshot.happinessBefore === 'number'
+                ? snapshot.happinessBefore
+                : (this.state.lastSnapshot?.happiness ?? this.state.happiness);
 
             if (step === '1') {
                 text.textContent = 'You have been the subject of identity theft. Multiple lines of credit now exist in Alex\'s name.';
@@ -1187,11 +1240,15 @@
                 text.textContent = `${service} just admitted a breach that leaked thousands of ID photos, including Alex\'s.`;
                 details.textContent = 'They mail twelve months of credit monitoring, but the rent is late and interest is smothering everything.';
                 this.state.money = -66000;
-                this.state.happiness = Math.max(1, this.state.happiness);
+                this.state.happiness = Math.max(0, this.state.happiness);
                 target = 'identitytheft3.html';
             } else {
                 text.textContent = 'Every account is frozen. Happiness flatlined at 1% and the debt is insurmountable.';
-                details.textContent = `Money: ${currency.format(this.state.money)} — Happiness: ${Math.round(this.state.happiness)}%`;
+                const afterMoney = this.state.money;
+                this.state.happiness = 0;
+                details.innerHTML = `
+          <strong>Before breach:</strong> ${currency.format(beforeMoney)} &nbsp;|&nbsp; ${Math.round(beforeHappiness)}% happiness.<br>
+          <strong>After breach:</strong> ${currency.format(afterMoney)} &nbsp;|&nbsp; 0% happiness.`;
                 buttonLabel = 'Learn More';
                 target = 'learnmore.html';
             }
@@ -1750,8 +1807,8 @@
                             }
                             const placeholders = {};
                             const choices = options.map((option, index) => {
-                                const cost = generateRangeValue(option.costRange);
-                                const happiness = generateRangeValue(option.happinessRange);
+                                const cost = applyCostIncrease(generateRangeValue(option.costRange));
+                                const happiness = applyHappinessGain(generateRangeValue(option.happinessRange));
                                 const key = option.key ? `${option.key}Cost` : `option${index + 1}Cost`;
                                 if (key) {
                                     placeholders[key] = currency.format(cost);
@@ -1799,7 +1856,7 @@
                                     choices: [],
                                 };
                             }
-                            const money = utils.weightedBetween(hit.money[0], hit.money[1]);
+                            const money = applyCostIncrease(utils.weightedBetween(hit.money[0], hit.money[1]));
                             const happiness = utils.weightedBetween(hit.happiness[0], hit.happiness[1]);
                             const replacements = {story: hit.story || ''};
                             const template = row.text || '{{story}}';
@@ -1902,8 +1959,8 @@
                                     choices: [{label: 'Skip it', next: 'RANDOM'}],
                                 };
                             }
-                            const cost = generateRangeValue(entry.cost, 0);
-                            const happiness = generateRangeValue(entry.happiness, 0);
+                            const cost = applyCostIncrease(generateRangeValue(entry.cost, 0));
+                            const happiness = applyHappinessGain(generateRangeValue(entry.happiness, 0));
                             const replacements = {cost: currency.format(cost)};
                             const joinChoice = {
                                 label: 'Join in',
@@ -1928,7 +1985,7 @@
                         build: () => {
                             const entry = badEventMap[config.dataId || row.id];
                             const text = entry?.text || row.text || '';
-                            const money = generateRangeValue(entry?.money, 0);
+                            const money = applyCostIncrease(generateRangeValue(entry?.money, 0));
                             const happiness = generateRangeValue(entry?.happiness, 0);
                             return {
                                 text,
@@ -1962,8 +2019,8 @@
                                     choices: [{label: 'Skip it', next: 'RANDOM'}],
                                 };
                             }
-                            const cost = generateRangeValue(entry.cost, 0);
-                            const happiness = generateRangeValue(entry.happiness, 0);
+                            const cost = applyCostIncrease(generateRangeValue(entry.cost, 0));
+                            const happiness = applyHappinessGain(generateRangeValue(entry.happiness, 0));
                             const replacements = {cost: currency.format(cost)};
                             const joinChoice = {
                                 label: 'Join the hobby',

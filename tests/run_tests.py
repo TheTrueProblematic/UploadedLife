@@ -2,6 +2,7 @@
 import re
 import unittest
 import json
+import subprocess
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -34,6 +35,13 @@ class SiteStructureTests(unittest.TestCase):
         pattern = re.compile(r'<template[^>]+id="template-main"', re.IGNORECASE)
         self.assertIsNotNone(pattern.search(self.html), msg="template-main definition missing")
 
+    def test_embedded_library_script_loads_before_engine(self):
+        embed_index = self.html.find("Resources/library-embedded.js")
+        scripts_index = self.html.find("scripts.js")
+        self.assertNotEqual(embed_index, -1, msg="Resources/library-embedded.js must be referenced in index.html")
+        self.assertNotEqual(scripts_index, -1, msg="scripts.js must be referenced in index.html")
+        self.assertLess(embed_index, scripts_index, msg="library-embedded.js should load before scripts.js")
+
     def test_library_json_contains_datasets(self):
         self.assertTrue(LIBRARY_JSON.exists(), msg="public/Resources/library.json missing")
         data = LIBRARY_JSON.read_text(encoding="utf-8")
@@ -55,6 +63,13 @@ class SiteStructureTests(unittest.TestCase):
         json_data = json.loads(LIBRARY_JSON.read_text(encoding="utf-8"))
         embedded_data = json.loads(payload)
         self.assertEqual(embedded_data, json_data, msg="library-embedded.js is out of sync with library.json (run node scripts/sync-library.js)")
+
+    def test_embedded_library_script_loads_before_engine(self):
+        embed_index = self.html.find("Resources/library-embedded.js")
+        scripts_index = self.html.find("scripts.js")
+        self.assertNotEqual(embed_index, -1, msg="Resources/library-embedded.js must be referenced in index.html")
+        self.assertNotEqual(scripts_index, -1, msg="scripts.js must be referenced in index.html")
+        self.assertLess(embed_index, scripts_index, msg="library-embedded.js should load before scripts.js")
 
     def test_host_initializes_before_scenario_promise(self):
         host_index = self.scripts.find("new UploadedLifeHost")
@@ -106,6 +121,20 @@ class SiteStructureTests(unittest.TestCase):
             pattern,
             msg="parseScenarioConfig should handle object values (embedded fallback data)",
         )
+
+    def test_scripts_pass_node_check(self):
+        targets = [
+            SCRIPTS_JS,
+            PUBLIC_DIR / "jobChoices.js",
+            LIBRARY_EMBED,
+        ]
+        for target in targets:
+            result = subprocess.run(["node", "--check", str(target)], capture_output=True, text=True)
+            self.assertEqual(
+                result.returncode,
+                0,
+                msg=f"node --check failed for {target}: {result.stderr.strip()}",
+            )
 
 
 if __name__ == "__main__":
