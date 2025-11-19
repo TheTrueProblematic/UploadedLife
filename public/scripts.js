@@ -632,6 +632,125 @@
     }
 ];
 
+    const embeddedIncidentEvents = [
+    {
+        "id": "incident_phone",
+        "story": "Alex drops their phone in a puddle.",
+        "moneyMin": "180",
+        "moneyMax": "320",
+        "happinessMin": "3",
+        "happinessMax": "7"
+    },
+    {
+        "id": "incident_dentist",
+        "story": "A surprise dentist bill appears after a lingering toothache.",
+        "moneyMin": "120",
+        "moneyMax": "400",
+        "happinessMin": "2",
+        "happinessMax": "5"
+    },
+    {
+        "id": "incident_roommate",
+        "story": "A roommate moves out without notice, leaving Alex with costs.",
+        "moneyMin": "200",
+        "moneyMax": "450",
+        "happinessMin": "4",
+        "happinessMax": "8"
+    }
+];
+
+    const embeddedGoodEvents = [
+    {
+        "id": "h1k4",
+        "text": "A night market is staging a neon drone show and creative workshop for {{cost}}.",
+        "providers": "NeonGrid|PulseArcade Collective",
+        "costMin": "18",
+        "costMax": "80",
+        "happinessMin": "1",
+        "happinessMax": "5"
+    },
+    {
+        "id": "j7m9",
+        "text": "A pop-up cooking lab offers a tasting menu and hands-on lesson for {{cost}}.",
+        "providers": "SavoryLab|Kitchen Playground",
+        "costMin": "25",
+        "costMax": "120",
+        "happinessMin": "2",
+        "happinessMax": "5"
+    },
+    {
+        "id": "u5w4",
+        "text": "A VR art collective invites Alex to a mindfulness residency for {{cost}}.",
+        "providers": "Atlas VR|CalmFields",
+        "costMin": "30",
+        "costMax": "140",
+        "happinessMin": "2",
+        "happinessMax": "5"
+    },
+    {
+        "id": "v6x2",
+        "text": "A lakefront yoga retreat has an open slot for {{cost}}.",
+        "providers": "StillWater|ZenCanopy",
+        "costMin": "40",
+        "costMax": "160",
+        "happinessMin": "2",
+        "happinessMax": "5"
+    }
+];
+
+    const embeddedBadEvents = [
+    {
+        "id": "k8n2",
+        "text": "A radiator bursts in Alex's unit.",
+        "moneyMin": "120",
+        "moneyMax": "400",
+        "happinessMin": "3",
+        "happinessMax": "7"
+    },
+    {
+        "id": "l5r6",
+        "text": "A close friend moves away unexpectedly.",
+        "moneyMin": "0",
+        "moneyMax": "0",
+        "happinessMin": "4",
+        "happinessMax": "9"
+    }
+];
+
+    const embeddedHobbyOffers = [
+    {
+        "id": "m3s8",
+        "text": "A community ceramics studio is offering memberships for {{cost}}/mo.",
+        "provider": "ClayCloud",
+        "costMin": "28",
+        "costMax": "40",
+        "happinessMin": "2",
+        "happinessMax": "4",
+        "requiresId": "true"
+    },
+    {
+        "id": "n4t1",
+        "text": "A neighborhood climbing gym drops its monthly rate to {{cost}}.",
+        "provider": "Summit Yard",
+        "costMin": "35",
+        "costMax": "55",
+        "happinessMin": "2",
+        "happinessMax": "5",
+        "requiresId": "false"
+    },
+    {
+        "id": "w3b7",
+        "text": "A retro gaming club invites Alex for {{cost}}/mo.",
+        "provider": "PixelGuild",
+        "costMin": "15",
+        "costMax": "30",
+        "happinessMin": "1",
+        "happinessMax": "3",
+        "requiresId": "true"
+    }
+];
+
+
     const scenarioLibraryPromise = buildScenarioLibrary(utils);
 
     class UploadedLifeHost {
@@ -2009,13 +2128,36 @@
 
 
     async function buildScenarioLibrary(utils) {
-        const [scenarioRowsRaw, jobRowsRaw] = await Promise.all([
+        const [
+            scenarioRowsRaw,
+            jobRowsRaw,
+            incidentRowsRaw,
+            goodEventRowsRaw,
+            badEventRowsRaw,
+            hobbyOfferRowsRaw,
+        ] = await Promise.all([
             loadCsvResource('Scenarios/scenarios.csv').catch((err) => {
                 console.warn('Uploaded Life: failed to load scenarios.csv, using embedded data', err);
                 return null;
             }),
             loadCsvResource('Scenarios/jobs.csv').catch((err) => {
                 console.warn('Uploaded Life: failed to load jobs.csv, using embedded data', err);
+                return null;
+            }),
+            loadCsvResource('Scenarios/incident_events.csv').catch((err) => {
+                console.warn('Uploaded Life: failed to load incident_events.csv, using embedded data', err);
+                return null;
+            }),
+            loadCsvResource('Scenarios/good_events.csv').catch((err) => {
+                console.warn('Uploaded Life: failed to load good_events.csv, using embedded data', err);
+                return null;
+            }),
+            loadCsvResource('Scenarios/bad_events.csv').catch((err) => {
+                console.warn('Uploaded Life: failed to load bad_events.csv, using embedded data', err);
+                return null;
+            }),
+            loadCsvResource('Scenarios/hobby_offers.csv').catch((err) => {
+                console.warn('Uploaded Life: failed to load hobby_offers.csv, using embedded data', err);
                 return null;
             }),
         ]);
@@ -2033,6 +2175,31 @@
             (row) => row?.group && row?.label && row?.effect,
         );
 
+        const incidentRows = ensureRows(
+            incidentRowsRaw,
+            embeddedIncidentEvents,
+            'incident events',
+            (row) => row?.story,
+        );
+        const goodEventRows = ensureRows(
+            goodEventRowsRaw,
+            embeddedGoodEvents,
+            'good events',
+            (row) => row?.id && row?.text,
+        );
+        const badEventRows = ensureRows(
+            badEventRowsRaw,
+            embeddedBadEvents,
+            'bad events',
+            (row) => row?.id && row?.text,
+        );
+        const hobbyOfferRows = ensureRows(
+            hobbyOfferRowsRaw,
+            embeddedHobbyOffers,
+            'hobby offers',
+            (row) => row?.id && row?.provider,
+        );
+
         const jobsByGroup = jobRows.reduce((acc, job) => {
             const group = (job.group || '').trim();
             if (!group) {
@@ -2045,6 +2212,39 @@
             });
             return acc;
         }, {});
+
+        const incidentEvents = incidentRows
+            .map((row) => ({
+                id: row.id || '',
+                story: row.story || '',
+                money: [toNumber(row.moneyMin, 0), toNumber(row.moneyMax, 0)],
+                happiness: [toNumber(row.happinessMin, 0), toNumber(row.happinessMax, 0)],
+            }))
+            .filter((entry) => entry.story);
+        const datasetCollections = {
+            incidentEvents,
+        };
+        const goodEventMap = createMap(goodEventRows, (row) => ({
+            id: row.id || '',
+            text: row.text || '',
+            providers: parseProviders(row.providers),
+            cost: [toNumber(row.costMin, 0), toNumber(row.costMax, 0)],
+            happiness: [toNumber(row.happinessMin, 0), toNumber(row.happinessMax, 0)],
+        }));
+        const badEventMap = createMap(badEventRows, (row) => ({
+            id: row.id || '',
+            text: row.text || '',
+            money: [toNumber(row.moneyMin, 0), toNumber(row.moneyMax, 0)],
+            happiness: [toNumber(row.happinessMin, 0), toNumber(row.happinessMax, 0)],
+        }));
+        const hobbyOfferMap = createMap(hobbyOfferRows, (row) => ({
+            id: row.id || '',
+            text: row.text || '',
+            provider: row.provider || '',
+            cost: [toNumber(row.costMin, 0), toNumber(row.costMax, 0)],
+            happiness: [toNumber(row.happinessMin, 0), toNumber(row.happinessMax, 0)],
+            requiresId: parseBoolean(row.requiresId),
+        }));
 
         const library = {};
         const add = (def) => {
@@ -2078,6 +2278,44 @@
             }
             console.warn(`Uploaded Life: ${label} missing or empty; using embedded defaults`);
             return cloneData(fallback);
+        }
+
+        function toNumber(value, fallback = 0) {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : fallback;
+        }
+
+        function parseBoolean(value) {
+            if (typeof value === 'boolean') {
+                return value;
+            }
+            if (typeof value === 'number') {
+                return value !== 0;
+            }
+            if (typeof value === 'string') {
+                const normalized = value.trim().toLowerCase();
+                if (!normalized) return false;
+                return normalized === 'true' || normalized === '1' || normalized === 'yes';
+            }
+            return false;
+        }
+
+        function parseProviders(value) {
+            if (!value) return [];
+            return String(value)
+                .split('|')
+                .map((item) => item.trim())
+                .filter(Boolean);
+        }
+
+        function createMap(rows, normalize) {
+            return rows.reduce((acc, row) => {
+                const entry = normalize ? normalize(row) : row;
+                if (entry && entry.id) {
+                    acc[entry.id] = entry;
+                }
+                return acc;
+            }, {});
         }
 
         function createScenarioDefinition(row, config) {
@@ -2158,16 +2396,22 @@
                         id: row.id,
                         pool: row.pool,
                         build: () => {
-                            const events = Array.isArray(config.events) ? config.events : [];
+                            const datasetName = config.dataSource || 'incidentEvents';
+                            const events = datasetCollections[datasetName] || incidentEvents;
                             const hit = utils.pick(events);
                             if (!hit) {
-                                return {text: row.text, details: row.details || undefined, choices: []};
+                                return {
+                                    text: row.text || '',
+                                    details: row.details || undefined,
+                                    choices: [],
+                                };
                             }
-                            const money = generateRangeValue(hit.moneyRange);
-                            const happiness = generateRangeValue(hit.happinessRange);
+                            const money = utils.weightedBetween(hit.money[0], hit.money[1]);
+                            const happiness = utils.weightedBetween(hit.happiness[0], hit.happiness[1]);
                             const replacements = {story: hit.story || ''};
+                            const template = row.text || '{{story}}';
                             return {
-                                text: replacePlaceholders(row.text, replacements),
+                                text: replacePlaceholders(template, replacements),
                                 details: row.details ? replacePlaceholders(row.details, replacements) : undefined,
                                 choices: [
                                     {
@@ -2253,19 +2497,27 @@
                         id: row.id,
                         pool: row.pool,
                         build: () => {
-                            const cost = generateRangeValue(config.costRange);
-                            const happiness = generateRangeValue(config.happinessRange);
+                            const entry = goodEventMap[config.dataId || row.id];
+                            if (!entry) {
+                                return {
+                                    text: row.text || '',
+                                    details: row.details || undefined,
+                                    choices: [{label: 'Skip it', next: 'RANDOM'}],
+                                };
+                            }
+                            const cost = generateRangeValue(entry.cost, 0);
+                            const happiness = generateRangeValue(entry.happiness, 0);
                             const replacements = {cost: currency.format(cost)};
                             const joinChoice = {
                                 label: 'Join in',
                                 next: 'RANDOM',
                                 immediate: {money: -cost, happiness},
                             };
-                            if (Array.isArray(config.providers) && config.providers.length) {
-                                joinChoice.idRequirement = {services: config.providers};
+                            if (entry.providers?.length) {
+                                joinChoice.idRequirement = {services: entry.providers};
                             }
                             return {
-                                text: replacePlaceholders(row.text, replacements),
+                                text: replacePlaceholders(entry.text || row.text || '', replacements),
                                 details: row.details ? replacePlaceholders(row.details, replacements) : undefined,
                                 choices: [joinChoice, {label: 'Skip it', next: 'RANDOM'}],
                             };
@@ -2276,10 +2528,12 @@
                         id: row.id,
                         pool: row.pool,
                         build: () => {
-                            const money = generateRangeValue(config.moneyRange);
-                            const happiness = generateRangeValue(config.happinessRange);
+                            const entry = badEventMap[config.dataId || row.id];
+                            const text = entry?.text || row.text || '';
+                            const money = generateRangeValue(entry?.money, 0);
+                            const happiness = generateRangeValue(entry?.happiness, 0);
                             return {
-                                text: row.text,
+                                text,
                                 details: row.details || undefined,
                                 choices: [
                                     {
@@ -2301,28 +2555,36 @@
                         id: row.id,
                         pool: row.pool,
                         build: () => {
-                            const cost = generateRangeValue(config.costRange);
-                            const happiness = generateRangeValue(config.happinessRange);
+                            const entry = hobbyOfferMap[config.dataId || row.id];
+                            if (!entry) {
+                                return {
+                                    text: row.text || '',
+                                    details: row.details || undefined,
+                                    choices: [{label: 'Skip it', next: 'RANDOM'}],
+                                };
+                            }
+                            const cost = generateRangeValue(entry.cost, 0);
+                            const happiness = generateRangeValue(entry.happiness, 0);
                             const replacements = {cost: currency.format(cost)};
                             const joinChoice = {
                                 label: 'Join the hobby',
                                 next: 'RANDOM',
                                 meta: {
                                     addHobby: {
-                                        costLabel: `${config.provider} membership`,
+                                        costLabel: `${entry.provider} membership`,
                                         monthlyCost: cost,
-                                        happyLabel: `${config.provider} joy`,
+                                        happyLabel: `${entry.provider} joy`,
                                         happinessBoost: happiness,
-                                        provider: config.provider,
-                                        requiresId: !!config.requiresId,
+                                        provider: entry.provider,
+                                        requiresId: entry.requiresId,
                                     },
                                 },
                             };
-                            if (config.requiresId) {
-                                joinChoice.idRequirement = {services: [config.provider]};
+                            if (entry.requiresId) {
+                                joinChoice.idRequirement = {services: [entry.provider]};
                             }
                             return {
-                                text: replacePlaceholders(row.text, replacements),
+                                text: replacePlaceholders(entry.text || row.text || '', replacements),
                                 details: row.details ? replacePlaceholders(row.details, replacements) : undefined,
                                 choices: [{label: 'Skip it', next: 'RANDOM'}, joinChoice],
                             };

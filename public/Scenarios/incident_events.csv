@@ -1,0 +1,4 @@
+id,story,moneyMin,moneyMax,happinessMin,happinessMax
+incident_phone,"Alex drops their phone in a puddle.",180,320,3,7
+incident_dentist,"A surprise dentist bill appears after a lingering toothache.",120,400,2,5
+incident_roommate,"A roommate moves out without notice, leaving Alex with costs.",200,450,4,8

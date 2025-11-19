@@ -1,0 +1,5 @@
+id,text,providers,costMin,costMax,happinessMin,happinessMax
+h1k4,"A night market is staging a neon drone show and creative workshop for {{cost}}.","NeonGrid|PulseArcade Collective",18,80,1,5
+j7m9,"A pop-up cooking lab offers a tasting menu and hands-on lesson for {{cost}}.","SavoryLab|Kitchen Playground",25,120,2,5
+u5w4,"A VR art collective invites Alex to a mindfulness residency for {{cost}}.","Atlas VR|CalmFields",30,140,2,5
+v6x2,"A lakefront yoga retreat has an open slot for {{cost}}.","StillWater|ZenCanopy",40,160,2,5
