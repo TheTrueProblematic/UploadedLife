@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-import csv
-import io
 import re
 import unittest
 from pathlib import Path
@@ -9,17 +7,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_DIR = PROJECT_ROOT / "public"
 INDEX_HTML = PUBLIC_DIR / "index.html"
 SCRIPTS_JS = PUBLIC_DIR / "scripts.js"
-SCENARIOS_CSV = PUBLIC_DIR / "Scenarios" / "scenarios.csv"
-JOBS_CSV = PUBLIC_DIR / "Scenarios" / "jobs.csv"
-INCIDENT_EVENTS_CSV = PUBLIC_DIR / "Scenarios" / "incident_events.csv"
-GOOD_EVENTS_CSV = PUBLIC_DIR / "Scenarios" / "good_events.csv"
-BAD_EVENTS_CSV = PUBLIC_DIR / "Scenarios" / "bad_events.csv"
-HOBBY_OFFERS_CSV = PUBLIC_DIR / "Scenarios" / "hobby_offers.csv"
-
-
-def _read_csv_rows(path: Path):
-    reader = csv.DictReader(io.StringIO(path.read_text(encoding="utf-8")))
-    return [row for row in reader if any((value or "").strip() for value in row.values())]
+LIBRARY_JSON = PUBLIC_DIR / "Scenarios" / "library.json"
 
 
 class SiteStructureTests(unittest.TestCase):
@@ -44,35 +32,15 @@ class SiteStructureTests(unittest.TestCase):
         pattern = re.compile(r'<template[^>]+id="template-main"', re.IGNORECASE)
         self.assertIsNotNone(pattern.search(self.html), msg="template-main definition missing")
 
-    def test_scenario_csv_contains_rows(self):
-        self.assertTrue(SCENARIOS_CSV.exists(), msg="public/Scenarios/scenarios.csv missing")
-        rows = _read_csv_rows(SCENARIOS_CSV)
-        self.assertGreater(len(rows), 0, msg="scenarios.csv should contain at least one scenario row")
-
-    def test_jobs_csv_contains_rows(self):
-        self.assertTrue(JOBS_CSV.exists(), msg="public/Scenarios/jobs.csv missing")
-        rows = _read_csv_rows(JOBS_CSV)
-        self.assertGreater(len(rows), 0, msg="jobs.csv should contain at least one job row")
-
-    def test_incident_events_csv_contains_rows(self):
-        self.assertTrue(INCIDENT_EVENTS_CSV.exists(), msg="public/Scenarios/incident_events.csv missing")
-        rows = _read_csv_rows(INCIDENT_EVENTS_CSV)
-        self.assertGreater(len(rows), 0, msg="incident_events.csv should contain at least one row")
-
-    def test_good_events_csv_contains_rows(self):
-        self.assertTrue(GOOD_EVENTS_CSV.exists(), msg="public/Scenarios/good_events.csv missing")
-        rows = _read_csv_rows(GOOD_EVENTS_CSV)
-        self.assertGreater(len(rows), 0, msg="good_events.csv should contain at least one row")
-
-    def test_bad_events_csv_contains_rows(self):
-        self.assertTrue(BAD_EVENTS_CSV.exists(), msg="public/Scenarios/bad_events.csv missing")
-        rows = _read_csv_rows(BAD_EVENTS_CSV)
-        self.assertGreater(len(rows), 0, msg="bad_events.csv should contain at least one row")
-
-    def test_hobby_offers_csv_contains_rows(self):
-        self.assertTrue(HOBBY_OFFERS_CSV.exists(), msg="public/Scenarios/hobby_offers.csv missing")
-        rows = _read_csv_rows(HOBBY_OFFERS_CSV)
-        self.assertGreater(len(rows), 0, msg="hobby_offers.csv should contain at least one row")
+    def test_library_json_contains_datasets(self):
+        self.assertTrue(LIBRARY_JSON.exists(), msg="public/Scenarios/library.json missing")
+        data = LIBRARY_JSON.read_text(encoding="utf-8")
+        self.assertIn('"scenarios": [', data, msg="library.json missing scenarios array")
+        self.assertIn('"jobs": [', data, msg="library.json missing jobs array")
+        self.assertIn('"incidentEvents": [', data, msg="library.json missing incidentEvents array")
+        self.assertIn('"goodEvents": [', data, msg="library.json missing goodEvents array")
+        self.assertIn('"badEvents": [', data, msg="library.json missing badEvents array")
+        self.assertIn('"hobbyOffers": [', data, msg="library.json missing hobbyOffers array")
 
     def test_host_initializes_before_scenario_promise(self):
         host_index = self.scripts.find("new UploadedLifeHost")
@@ -86,7 +54,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertRegex(
             self.scripts,
             r"function\s+loadTextViaIframe",
-            msg="scripts.js should provide an iframe loading fallback for CSV data",
+            msg="scripts.js should provide an iframe loading fallback for dataset files",
         )
 
     def test_loading_modal_flag_defined(self):
@@ -107,30 +75,12 @@ class SiteStructureTests(unittest.TestCase):
             msg="setScenarioLibrary should close the loading modal when data arrives",
         )
 
-    def test_embedded_scenario_rows_present(self):
+    def test_script_references_library_json(self):
         self.assertIn(
-            "const embeddedScenarioRows",
+            "Scenarios/library.json",
             self.scripts,
-            msg="scripts.js must include embedded scenario rows for offline fallback",
+            msg="scripts.js should load the consolidated library.json dataset",
         )
-
-    def test_embedded_datasets_present(self):
-        for token in (
-            "embeddedIncidentEvents",
-            "embeddedGoodEvents",
-            "embeddedBadEvents",
-            "embeddedHobbyOffers",
-        ):
-            self.assertIn(token, self.scripts, msg=f"{token} should exist for offline fallbacks")
-
-    def test_script_references_new_data_sources(self):
-        for filename in (
-            "incident_events.csv",
-            "good_events.csv",
-            "bad_events.csv",
-            "hobby_offers.csv",
-        ):
-            self.assertIn(filename, self.scripts, msg=f"scripts.js should load {filename}")
 
     def test_parse_config_supports_objects(self):
         pattern = re.compile(

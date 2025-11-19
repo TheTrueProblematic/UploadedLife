@@ -81,674 +81,6 @@
         }
     })();
 
-    const embeddedScenarioRows = [
-    {
-        "id": "a1r7",
-        "pool": "core",
-        "type": "jobSelection",
-        "text": "Month one as Alex. Rent is due and bills are looming. Two gigs are ready if Alex commits.",
-        "details": "",
-        "config": {
-            "jobGroup": "first-month-a",
-            "next": "b4m2.html"
-        }
-    },
-    {
-        "id": "d8k3",
-        "pool": "core",
-        "type": "jobSelection",
-        "text": "Alex can reboot their career this month by either managing inventory or testing apps overnight.",
-        "details": "",
-        "config": {
-            "jobGroup": "first-month-b",
-            "next": "b4m2.html"
-        }
-    },
-    {
-        "id": "b4m2",
-        "pool": "core",
-        "type": "static",
-        "text": "The employer portal is asking for a government ID upload before payroll will run.",
-        "details": "Declining only delays everything\u2014modern workplaces expect verification.",
-        "config": {
-            "choices": [
-                {
-                    "label": "Submit the documents",
-                    "next": "c7t9.html",
-                    "idService": "WorkGate HR"
-                },
-                {
-                    "label": "Decline (for now)",
-                    "next": "c7t9.html",
-                    "requireModal": "It would be nice to skip, but Alex has to verify with the employer to stay paid."
-                }
-            ]
-        }
-    },
-    {
-        "id": "c7t9",
-        "pool": "core",
-        "type": "hobbyStarter",
-        "text": "Alex needs a recurring joy. Streaming costs {{streamingCost}}/mo while a bowling league runs {{bowlingCost}}/mo.",
-        "details": "Both would soften the edges of the week in different ways.",
-        "config": {
-            "options": [
-                {
-                    "key": "streaming",
-                    "label": "Pick the streaming bundle",
-                    "next": "d2q5.html",
-                    "costRange": [
-                        12,
-                        22
-                    ],
-                    "happinessRange": [
-                        1,
-                        3
-                    ],
-                    "hobby": {
-                        "hobbyId": "streaming",
-                        "costLabel": "Stream bundle subscription",
-                        "happyLabel": "Weekly story binge",
-                        "provider": "StreamDeck",
-                        "requiresId": true
-                    }
-                },
-                {
-                    "key": "bowling",
-                    "label": "Join the bowling league",
-                    "next": "d2q5.html",
-                    "costRange": [
-                        30,
-                        45
-                    ],
-                    "happinessRange": [
-                        2,
-                        4
-                    ],
-                    "hobby": {
-                        "hobbyId": "bowling",
-                        "costLabel": "League dues",
-                        "happyLabel": "League friends",
-                        "provider": "City Lanes",
-                        "requiresId": false
-                    }
-                }
-            ]
-        }
-    },
-    {
-        "id": "d2q5",
-        "pool": "core",
-        "type": "incidentChoice",
-        "text": "{{story}}",
-        "details": "Alex can throw money at the problem to soften the blow or push through and absorb the emotional hit.",
-        "config": {
-            "events": [
-                {
-                    "story": "Alex drops their phone in a puddle.",
-                    "moneyRange": [
-                        180,
-                        320
-                    ],
-                    "happinessRange": [
-                        3,
-                        7
-                    ]
-                },
-                {
-                    "story": "A surprise dentist bill appears after a lingering toothache.",
-                    "moneyRange": [
-                        120,
-                        400
-                    ],
-                    "happinessRange": [
-                        2,
-                        5
-                    ]
-                },
-                {
-                    "story": "A roommate moves out without notice, leaving Alex with costs.",
-                    "moneyRange": [
-                        200,
-                        450
-                    ],
-                    "happinessRange": [
-                        4,
-                        8
-                    ]
-                }
-            ],
-            "next": "e5v1.html"
-        }
-    },
-    {
-        "id": "e5v1",
-        "pool": "core",
-        "type": "static",
-        "text": "Alex is tired of eating dinner alone. Is it better to meet people face-to-face or download an app?",
-        "details": "",
-        "config": {
-            "choices": [
-                {
-                    "label": "Meet people in person",
-                    "next": "g6k8.html",
-                    "meta": {
-                        "setDatingMethod": "inperson"
-                    }
-                },
-                {
-                    "label": "Download an app",
-                    "next": "f9h3.html",
-                    "meta": {
-                        "setDatingMethod": "app"
-                    }
-                }
-            ]
-        }
-    },
-    {
-        "id": "f9h3",
-        "pool": "core",
-        "type": "datingApp",
-        "text": "{{app}} requires ID verification before Alex can message anyone.",
-        "details": "",
-        "config": {
-            "apps": [
-                "HeartMatch",
-                "Kindred",
-                "PulseDate"
-            ],
-            "next": "g6k8.html"
-        }
-    },
-    {
-        "id": "g6k8",
-        "pool": "core",
-        "type": "relationshipOutcome",
-        "text": "",
-        "details": "",
-        "config": {
-            "successTextApp": "Alex found someone! Thanks to the app, dates are now happening.",
-            "successTextInperson": "Alex found someone! Thanks to chance meetings, dates are now happening.",
-            "failureText": "No matches stuck this month. Loneliness weighs even heavier now.",
-            "successChoices": [
-                {
-                    "label": "Go out occasionally",
-                    "next": "RANDOM",
-                    "meta": {
-                        "applyRelationship": {
-                            "costLabel": "Occasional date nights",
-                            "monthlyCost": 25,
-                            "happyLabel": "Shared connection",
-                            "happinessBoost": 2,
-                            "frequency": "occasional"
-                        },
-                        "clearDatingMethod": true
-                    }
-                },
-                {
-                    "label": "Go out frequently",
-                    "next": "RANDOM",
-                    "meta": {
-                        "applyRelationship": {
-                            "costLabel": "Frequent date nights",
-                            "monthlyCost": 75,
-                            "happyLabel": "Romantic whirlwind",
-                            "happinessBoost": 4,
-                            "frequency": "frequent"
-                        },
-                        "clearDatingMethod": true
-                    }
-                }
-            ],
-            "failureChoices": [
-                {
-                    "label": "Move on alone",
-                    "next": "RANDOM",
-                    "immediate": {
-                        "happiness": -10
-                    },
-                    "meta": {
-                        "clearDatingMethod": true
-                    }
-                },
-                {
-                    "label": "Hangout with a friend",
-                    "next": "RANDOM",
-                    "immediate": {
-                        "money": -25,
-                        "happiness": -8
-                    },
-                    "meta": {
-                        "clearDatingMethod": true
-                    }
-                }
-            ]
-        }
-    },
-    {
-        "id": "r0q9",
-        "pool": "auxiliary",
-        "type": "pendingRelationship",
-        "text": "How often should Alex go out with this new partner?",
-        "details": "",
-        "config": {
-            "choices": [
-                {
-                    "label": "Keep it occasional",
-                    "next": "RANDOM",
-                    "meta": {
-                        "completePendingRelationship": {
-                            "costLabel": "Occasional outings",
-                            "monthlyCost": 25,
-                            "happyLabel": "Steady partnership",
-                            "happinessBoost": 2,
-                            "frequency": "occasional"
-                        }
-                    }
-                },
-                {
-                    "label": "Dive in fully",
-                    "next": "RANDOM",
-                    "meta": {
-                        "completePendingRelationship": {
-                            "costLabel": "Frequent outings",
-                            "monthlyCost": 75,
-                            "happyLabel": "Intense partnership",
-                            "happinessBoost": 4,
-                            "frequency": "frequent"
-                        }
-                    }
-                }
-            ]
-        }
-    },
-    {
-        "id": "h1k4",
-        "pool": "random",
-        "type": "goodEvent",
-        "text": "A night market is staging a neon drone show and creative workshop for {{cost}}.",
-        "details": "",
-        "config": {
-            "providers": [
-                "NeonGrid",
-                "PulseArcade Collective"
-            ],
-            "costRange": [
-                18,
-                80
-            ],
-            "happinessRange": [
-                1,
-                5
-            ]
-        }
-    },
-    {
-        "id": "j7m9",
-        "pool": "random",
-        "type": "goodEvent",
-        "text": "A pop-up cooking lab offers a tasting menu and hands-on lesson for {{cost}}.",
-        "details": "",
-        "config": {
-            "providers": [
-                "SavoryLab",
-                "Kitchen Playground"
-            ],
-            "costRange": [
-                25,
-                120
-            ],
-            "happinessRange": [
-                2,
-                5
-            ]
-        }
-    },
-    {
-        "id": "u5w4",
-        "pool": "random",
-        "type": "goodEvent",
-        "text": "A VR art collective invites Alex to a mindfulness residency for {{cost}}.",
-        "details": "",
-        "config": {
-            "providers": [
-                "Atlas VR",
-                "CalmFields"
-            ],
-            "costRange": [
-                30,
-                140
-            ],
-            "happinessRange": [
-                2,
-                5
-            ]
-        }
-    },
-    {
-        "id": "v6x2",
-        "pool": "random",
-        "type": "goodEvent",
-        "text": "A lakefront yoga retreat has an open slot for {{cost}}.",
-        "details": "",
-        "config": {
-            "providers": [
-                "StillWater",
-                "ZenCanopy"
-            ],
-            "costRange": [
-                40,
-                160
-            ],
-            "happinessRange": [
-                2,
-                5
-            ]
-        }
-    },
-    {
-        "id": "k8n2",
-        "pool": "random",
-        "type": "badEvent",
-        "text": "A radiator bursts in Alex's unit.",
-        "details": "",
-        "config": {
-            "moneyRange": [
-                120,
-                400
-            ],
-            "happinessRange": [
-                3,
-                7
-            ]
-        }
-    },
-    {
-        "id": "l5r6",
-        "pool": "random",
-        "type": "badEvent",
-        "text": "A close friend moves away unexpectedly.",
-        "details": "",
-        "config": {
-            "moneyRange": [
-                0,
-                0
-            ],
-            "happinessRange": [
-                4,
-                9
-            ]
-        }
-    },
-    {
-        "id": "m3s8",
-        "pool": "random",
-        "type": "hobbyOffer",
-        "text": "A community ceramics studio is offering memberships for {{cost}}/mo.",
-        "details": "",
-        "config": {
-            "provider": "ClayCloud",
-            "costRange": [
-                28,
-                40
-            ],
-            "happinessRange": [
-                2,
-                4
-            ],
-            "requiresId": true
-        }
-    },
-    {
-        "id": "n4t1",
-        "pool": "random",
-        "type": "hobbyOffer",
-        "text": "A neighborhood climbing gym drops its monthly rate to {{cost}}.",
-        "details": "",
-        "config": {
-            "provider": "Summit Yard",
-            "costRange": [
-                35,
-                55
-            ],
-            "happinessRange": [
-                2,
-                5
-            ],
-            "requiresId": false
-        }
-    },
-    {
-        "id": "w3b7",
-        "pool": "random",
-        "type": "hobbyOffer",
-        "text": "A retro gaming club invites Alex for {{cost}}/mo.",
-        "details": "",
-        "config": {
-            "provider": "PixelGuild",
-            "costRange": [
-                15,
-                30
-            ],
-            "happinessRange": [
-                1,
-                3
-            ],
-            "requiresId": true
-        }
-    },
-    {
-        "id": "p2v5",
-        "pool": "random",
-        "type": "relationshipBreakup",
-        "text": "Alex and their partner drift apart and decide to break up.",
-        "details": "",
-        "config": {
-            "lossRange": [
-                3,
-                9
-            ]
-        }
-    },
-    {
-        "id": "q8w3",
-        "pool": "random",
-        "type": "relationshipInvite",
-        "text": "Alex keeps running into someone at the climbing gym who wants to grab tea.",
-        "details": "",
-        "config": {
-            "next": "r0q9.html"
-        }
-    },
-    {
-        "id": "y2d5",
-        "pool": "random",
-        "type": "relationshipInvite",
-        "text": "A friend introduces Alex to a coworker who loves indie films and wants to meet.",
-        "details": "",
-        "config": {
-            "next": "r0q9.html"
-        }
-    },
-    {
-        "id": "s9y2",
-        "pool": "random",
-        "type": "promotionOffer",
-        "text": "Work offers Alex a team lead promotion worth {{raise}} more each month.",
-        "details": "It comes with more responsibility and the risk of extra stress.",
-        "config": {
-            "stress": "Team lead stress",
-            "raiseRange": [
-                50,
-                200
-            ]
-        }
-    },
-    {
-        "id": "x4f8",
-        "pool": "random",
-        "type": "promotionOffer",
-        "text": "A supervisor wants Alex to run evening operations for {{raise}} extra.",
-        "details": "It comes with more responsibility and the risk of extra stress.",
-        "config": {
-            "stress": "Operations stress",
-            "raiseRange": [
-                50,
-                200
-            ]
-        }
-    },
-    {
-        "id": "t4u7",
-        "pool": "random",
-        "type": "hobbyVerification",
-        "text": "{{hobbyName}} now requires ID verification to keep participating.",
-        "details": "",
-        "config": {}
-    }
-];
-
-    const embeddedJobRows = [
-    {
-        "group": "first-month-a",
-        "label": "Pull espresso at Skyline Roastery",
-        "effect": "Roastery Pay"
-    },
-    {
-        "group": "first-month-a",
-        "label": "Remote support shifts for Nightline",
-        "effect": "Nightline Support Pay"
-    },
-    {
-        "group": "first-month-b",
-        "label": "Warehouse inventory coordinator",
-        "effect": "Inventory Contract"
-    },
-    {
-        "group": "first-month-b",
-        "label": "Beta-test night apps",
-        "effect": "App Beta Income"
-    }
-];
-
-    const embeddedIncidentEvents = [
-    {
-        "id": "incident_phone",
-        "story": "Alex drops their phone in a puddle.",
-        "moneyMin": "180",
-        "moneyMax": "320",
-        "happinessMin": "3",
-        "happinessMax": "7"
-    },
-    {
-        "id": "incident_dentist",
-        "story": "A surprise dentist bill appears after a lingering toothache.",
-        "moneyMin": "120",
-        "moneyMax": "400",
-        "happinessMin": "2",
-        "happinessMax": "5"
-    },
-    {
-        "id": "incident_roommate",
-        "story": "A roommate moves out without notice, leaving Alex with costs.",
-        "moneyMin": "200",
-        "moneyMax": "450",
-        "happinessMin": "4",
-        "happinessMax": "8"
-    }
-];
-
-    const embeddedGoodEvents = [
-    {
-        "id": "h1k4",
-        "text": "A night market is staging a neon drone show and creative workshop for {{cost}}.",
-        "providers": "NeonGrid|PulseArcade Collective",
-        "costMin": "18",
-        "costMax": "80",
-        "happinessMin": "1",
-        "happinessMax": "5"
-    },
-    {
-        "id": "j7m9",
-        "text": "A pop-up cooking lab offers a tasting menu and hands-on lesson for {{cost}}.",
-        "providers": "SavoryLab|Kitchen Playground",
-        "costMin": "25",
-        "costMax": "120",
-        "happinessMin": "2",
-        "happinessMax": "5"
-    },
-    {
-        "id": "u5w4",
-        "text": "A VR art collective invites Alex to a mindfulness residency for {{cost}}.",
-        "providers": "Atlas VR|CalmFields",
-        "costMin": "30",
-        "costMax": "140",
-        "happinessMin": "2",
-        "happinessMax": "5"
-    },
-    {
-        "id": "v6x2",
-        "text": "A lakefront yoga retreat has an open slot for {{cost}}.",
-        "providers": "StillWater|ZenCanopy",
-        "costMin": "40",
-        "costMax": "160",
-        "happinessMin": "2",
-        "happinessMax": "5"
-    }
-];
-
-    const embeddedBadEvents = [
-    {
-        "id": "k8n2",
-        "text": "A radiator bursts in Alex's unit.",
-        "moneyMin": "120",
-        "moneyMax": "400",
-        "happinessMin": "3",
-        "happinessMax": "7"
-    },
-    {
-        "id": "l5r6",
-        "text": "A close friend moves away unexpectedly.",
-        "moneyMin": "0",
-        "moneyMax": "0",
-        "happinessMin": "4",
-        "happinessMax": "9"
-    }
-];
-
-    const embeddedHobbyOffers = [
-    {
-        "id": "m3s8",
-        "text": "A community ceramics studio is offering memberships for {{cost}}/mo.",
-        "provider": "ClayCloud",
-        "costMin": "28",
-        "costMax": "40",
-        "happinessMin": "2",
-        "happinessMax": "4",
-        "requiresId": "true"
-    },
-    {
-        "id": "n4t1",
-        "text": "A neighborhood climbing gym drops its monthly rate to {{cost}}.",
-        "provider": "Summit Yard",
-        "costMin": "35",
-        "costMax": "55",
-        "happinessMin": "2",
-        "happinessMax": "5",
-        "requiresId": "false"
-    },
-    {
-        "id": "w3b7",
-        "text": "A retro gaming club invites Alex for {{cost}}/mo.",
-        "provider": "PixelGuild",
-        "costMin": "15",
-        "costMax": "30",
-        "happinessMin": "1",
-        "happinessMax": "3",
-        "requiresId": "true"
-    }
-];
 
 
     const scenarioLibraryPromise = buildScenarioLibrary(utils);
@@ -2128,74 +1460,32 @@
 
 
     async function buildScenarioLibrary(utils) {
-        const [
-            scenarioRowsRaw,
-            jobRowsRaw,
-            incidentRowsRaw,
-            goodEventRowsRaw,
-            badEventRowsRaw,
-            hobbyOfferRowsRaw,
-        ] = await Promise.all([
-            loadCsvResource('Scenarios/scenarios.csv').catch((err) => {
-                console.warn('Uploaded Life: failed to load scenarios.csv, using embedded data', err);
-                return null;
-            }),
-            loadCsvResource('Scenarios/jobs.csv').catch((err) => {
-                console.warn('Uploaded Life: failed to load jobs.csv, using embedded data', err);
-                return null;
-            }),
-            loadCsvResource('Scenarios/incident_events.csv').catch((err) => {
-                console.warn('Uploaded Life: failed to load incident_events.csv, using embedded data', err);
-                return null;
-            }),
-            loadCsvResource('Scenarios/good_events.csv').catch((err) => {
-                console.warn('Uploaded Life: failed to load good_events.csv, using embedded data', err);
-                return null;
-            }),
-            loadCsvResource('Scenarios/bad_events.csv').catch((err) => {
-                console.warn('Uploaded Life: failed to load bad_events.csv, using embedded data', err);
-                return null;
-            }),
-            loadCsvResource('Scenarios/hobby_offers.csv').catch((err) => {
-                console.warn('Uploaded Life: failed to load hobby_offers.csv, using embedded data', err);
-                return null;
-            }),
-        ]);
+        const dataset = await loadDataset('Scenarios/library.json', 'scenario library');
 
-        const scenarioRows = ensureRows(
-            scenarioRowsRaw,
-            embeddedScenarioRows,
-            'scenario data',
-            (row) => row?.id && row?.type,
-        );
-        const jobRows = ensureRows(
-            jobRowsRaw,
-            embeddedJobRows,
+        const scenarioRows = requireRows(dataset?.scenarios, 'scenario data', (row) => row?.id && row?.type);
+        const jobRows = requireRows(
+            dataset?.jobs,
             'job data',
             (row) => row?.group && row?.label && row?.effect,
         );
 
-        const incidentRows = ensureRows(
-            incidentRowsRaw,
-            embeddedIncidentEvents,
+        const incidentRows = requireRows(
+            dataset?.incidentEvents,
             'incident events',
             (row) => row?.story,
         );
-        const goodEventRows = ensureRows(
-            goodEventRowsRaw,
-            embeddedGoodEvents,
+        const goodEventRows = requireRows(
+            dataset?.goodEvents,
             'good events',
             (row) => row?.id && row?.text,
         );
-        const badEventRows = ensureRows(
-            badEventRowsRaw,
-            embeddedBadEvents,
+        const badEventRows = requireRows(
+            dataset?.badEvents,
             'bad events',
             (row) => row?.id && row?.text,
         );
-        const hobbyOfferRows = ensureRows(
-            hobbyOfferRowsRaw,
-            embeddedHobbyOffers,
+        const hobbyOfferRows = requireRows(
+            dataset?.hobbyOffers,
             'hobby offers',
             (row) => row?.id && row?.provider,
         );
@@ -2272,12 +1562,20 @@
 
         return library;
 
-        function ensureRows(rows, fallback, label, validator) {
+        async function loadDataset(relativePath, label) {
+            try {
+                return await loadJsonResource(relativePath);
+            } catch (err) {
+                const detail = err?.message || String(err);
+                throw new Error(`Uploaded Life: unable to load ${label} from ${relativePath}: ${detail}`);
+            }
+        }
+
+        function requireRows(rows, label, validator) {
             if (rows && rows.length && (!validator || rows.every((row) => validator(row)))) {
                 return rows;
             }
-            console.warn(`Uploaded Life: ${label} missing or empty; using embedded defaults`);
-            return cloneData(fallback);
+            throw new Error(`Uploaded Life: ${label} missing or invalid`);
         }
 
         function toNumber(value, fallback = 0) {
@@ -2688,18 +1986,28 @@
         }
     }
 
-    async function loadCsvResource(relativePath) {
+    async function loadJsonResource(relativePath) {
         const target = resolveAssetUrl(relativePath);
+        const text = await loadTextResource(target, relativePath);
+        try {
+            return JSON.parse(text);
+        } catch (err) {
+            const detail = err?.message || err;
+            throw new Error(`Failed to parse ${relativePath} as JSON: ${detail}`);
+        }
+    }
+
+    async function loadTextResource(target, label) {
         const errors = [];
 
         if (typeof fetch === 'function') {
             try {
                 const response = await fetch(target, {credentials: 'same-origin'});
                 if (!response.ok) {
-                    throw new Error(`Failed to load ${relativePath}: ${response.status}`);
+                    throw new Error(`Failed to load ${label || target}: ${response.status}`);
                 }
                 const text = await response.text();
-                return parseCsv(text);
+                return text;
             } catch (err) {
                 errors.push(err);
             }
@@ -2708,7 +2016,7 @@
         if (typeof XMLHttpRequest === 'function') {
             try {
                 const fallbackText = await loadTextViaXhr(target);
-                return parseCsv(fallbackText);
+                return fallbackText;
             } catch (err) {
                 errors.push(err);
             }
@@ -2717,14 +2025,14 @@
         if (typeof document !== 'undefined' && typeof document.createElement === 'function') {
             try {
                 const iframeText = await loadTextViaIframe(target);
-                return parseCsv(iframeText);
+                return iframeText;
             } catch (err) {
                 errors.push(err);
             }
         }
 
         const detail = errors.length ? ` (${errors.map((err) => err?.message || err).join('; ')})` : '';
-        throw new Error(`No supported method to load scenario data${detail}`);
+        throw new Error(`No supported method to load ${label || 'resource'}${detail}`);
     }
 
     function resolveAssetUrl(relativePath) {
@@ -2804,65 +2112,6 @@
             iframe.src = url;
             body.appendChild(iframe);
         });
-    }
-
-    function parseCsv(text) {
-        const output = [];
-        if (!text) {
-            return output;
-        }
-        const lines = text.replace(/\r\n/g, '\n').split('\n');
-        let headers = null;
-        lines.forEach((raw) => {
-            const line = raw.trimEnd();
-            if (!line) {
-                return;
-            }
-            const cells = parseCsvLine(line);
-            if (!cells.length) {
-                return;
-            }
-            if (!headers) {
-                headers = cells;
-                return;
-            }
-            const entry = {};
-            headers.forEach((header, idx) => {
-                entry[header] = cells[idx] ?? '';
-            });
-            output.push(entry);
-        });
-        return output;
-    }
-
-    function parseCsvLine(line) {
-        const cells = [];
-        let current = '';
-        let inQuotes = false;
-        for (let i = 0; i < line.length; i += 1) {
-            const char = line[i];
-            if (inQuotes) {
-                if (char === '"') {
-                    if (line[i + 1] === '"') {
-                        current += '"';
-                        i += 1;
-                    } else {
-                        inQuotes = false;
-                    }
-                } else {
-                    current += char;
-                }
-            } else if (char === '"') {
-                inQuotes = true;
-            } else if (char === ',') {
-                cells.push(current.trim());
-                current = '';
-            } else {
-                current += char;
-            }
-        }
-        cells.push(current.trim());
-        return cells;
     }
 
     function parseScenarioConfig(value) {
