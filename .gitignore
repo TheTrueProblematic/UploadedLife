@@ -71,3 +71,4 @@ node_modules/
 # others
 AGENTS.md
 .DS_Store
+public/.DS_Store
