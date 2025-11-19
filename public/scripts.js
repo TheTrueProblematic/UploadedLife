@@ -81,15 +81,571 @@
         }
     })();
 
-    const scenarioLibrary = buildScenarioLibrary(utils);
+    const embeddedScenarioRows = [
+    {
+        "id": "a1r7",
+        "pool": "core",
+        "type": "jobSelection",
+        "text": "Month one as Alex. Rent is due and bills are looming. Two gigs are ready if Alex commits.",
+        "details": "",
+        "config": {
+            "jobGroup": "first-month-a",
+            "next": "b4m2.html"
+        }
+    },
+    {
+        "id": "d8k3",
+        "pool": "core",
+        "type": "jobSelection",
+        "text": "Alex can reboot their career this month by either managing inventory or testing apps overnight.",
+        "details": "",
+        "config": {
+            "jobGroup": "first-month-b",
+            "next": "b4m2.html"
+        }
+    },
+    {
+        "id": "b4m2",
+        "pool": "core",
+        "type": "static",
+        "text": "The employer portal is asking for a government ID upload before payroll will run.",
+        "details": "Declining only delays everything\u2014modern workplaces expect verification.",
+        "config": {
+            "choices": [
+                {
+                    "label": "Submit the documents",
+                    "next": "c7t9.html",
+                    "idService": "WorkGate HR"
+                },
+                {
+                    "label": "Decline (for now)",
+                    "next": "c7t9.html",
+                    "requireModal": "It would be nice to skip, but Alex has to verify with the employer to stay paid."
+                }
+            ]
+        }
+    },
+    {
+        "id": "c7t9",
+        "pool": "core",
+        "type": "hobbyStarter",
+        "text": "Alex needs a recurring joy. Streaming costs {{streamingCost}}/mo while a bowling league runs {{bowlingCost}}/mo.",
+        "details": "Both would soften the edges of the week in different ways.",
+        "config": {
+            "options": [
+                {
+                    "key": "streaming",
+                    "label": "Pick the streaming bundle",
+                    "next": "d2q5.html",
+                    "costRange": [
+                        12,
+                        22
+                    ],
+                    "happinessRange": [
+                        1,
+                        3
+                    ],
+                    "hobby": {
+                        "hobbyId": "streaming",
+                        "costLabel": "Stream bundle subscription",
+                        "happyLabel": "Weekly story binge",
+                        "provider": "StreamDeck",
+                        "requiresId": true
+                    }
+                },
+                {
+                    "key": "bowling",
+                    "label": "Join the bowling league",
+                    "next": "d2q5.html",
+                    "costRange": [
+                        30,
+                        45
+                    ],
+                    "happinessRange": [
+                        2,
+                        4
+                    ],
+                    "hobby": {
+                        "hobbyId": "bowling",
+                        "costLabel": "League dues",
+                        "happyLabel": "League friends",
+                        "provider": "City Lanes",
+                        "requiresId": false
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "id": "d2q5",
+        "pool": "core",
+        "type": "incidentChoice",
+        "text": "{{story}}",
+        "details": "Alex can throw money at the problem to soften the blow or push through and absorb the emotional hit.",
+        "config": {
+            "events": [
+                {
+                    "story": "Alex drops their phone in a puddle.",
+                    "moneyRange": [
+                        180,
+                        320
+                    ],
+                    "happinessRange": [
+                        3,
+                        7
+                    ]
+                },
+                {
+                    "story": "A surprise dentist bill appears after a lingering toothache.",
+                    "moneyRange": [
+                        120,
+                        400
+                    ],
+                    "happinessRange": [
+                        2,
+                        5
+                    ]
+                },
+                {
+                    "story": "A roommate moves out without notice, leaving Alex with costs.",
+                    "moneyRange": [
+                        200,
+                        450
+                    ],
+                    "happinessRange": [
+                        4,
+                        8
+                    ]
+                }
+            ],
+            "next": "e5v1.html"
+        }
+    },
+    {
+        "id": "e5v1",
+        "pool": "core",
+        "type": "static",
+        "text": "Alex is tired of eating dinner alone. Is it better to meet people face-to-face or download an app?",
+        "details": "",
+        "config": {
+            "choices": [
+                {
+                    "label": "Meet people in person",
+                    "next": "g6k8.html",
+                    "meta": {
+                        "setDatingMethod": "inperson"
+                    }
+                },
+                {
+                    "label": "Download an app",
+                    "next": "f9h3.html",
+                    "meta": {
+                        "setDatingMethod": "app"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "id": "f9h3",
+        "pool": "core",
+        "type": "datingApp",
+        "text": "{{app}} requires ID verification before Alex can message anyone.",
+        "details": "",
+        "config": {
+            "apps": [
+                "HeartMatch",
+                "Kindred",
+                "PulseDate"
+            ],
+            "next": "g6k8.html"
+        }
+    },
+    {
+        "id": "g6k8",
+        "pool": "core",
+        "type": "relationshipOutcome",
+        "text": "",
+        "details": "",
+        "config": {
+            "successTextApp": "Alex found someone! Thanks to the app, dates are now happening.",
+            "successTextInperson": "Alex found someone! Thanks to chance meetings, dates are now happening.",
+            "failureText": "No matches stuck this month. Loneliness weighs even heavier now.",
+            "successChoices": [
+                {
+                    "label": "Go out occasionally",
+                    "next": "RANDOM",
+                    "meta": {
+                        "applyRelationship": {
+                            "costLabel": "Occasional date nights",
+                            "monthlyCost": 25,
+                            "happyLabel": "Shared connection",
+                            "happinessBoost": 2,
+                            "frequency": "occasional"
+                        },
+                        "clearDatingMethod": true
+                    }
+                },
+                {
+                    "label": "Go out frequently",
+                    "next": "RANDOM",
+                    "meta": {
+                        "applyRelationship": {
+                            "costLabel": "Frequent date nights",
+                            "monthlyCost": 75,
+                            "happyLabel": "Romantic whirlwind",
+                            "happinessBoost": 4,
+                            "frequency": "frequent"
+                        },
+                        "clearDatingMethod": true
+                    }
+                }
+            ],
+            "failureChoices": [
+                {
+                    "label": "Move on alone",
+                    "next": "RANDOM",
+                    "immediate": {
+                        "happiness": -10
+                    },
+                    "meta": {
+                        "clearDatingMethod": true
+                    }
+                },
+                {
+                    "label": "Hangout with a friend",
+                    "next": "RANDOM",
+                    "immediate": {
+                        "money": -25,
+                        "happiness": -8
+                    },
+                    "meta": {
+                        "clearDatingMethod": true
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "id": "r0q9",
+        "pool": "auxiliary",
+        "type": "pendingRelationship",
+        "text": "How often should Alex go out with this new partner?",
+        "details": "",
+        "config": {
+            "choices": [
+                {
+                    "label": "Keep it occasional",
+                    "next": "RANDOM",
+                    "meta": {
+                        "completePendingRelationship": {
+                            "costLabel": "Occasional outings",
+                            "monthlyCost": 25,
+                            "happyLabel": "Steady partnership",
+                            "happinessBoost": 2,
+                            "frequency": "occasional"
+                        }
+                    }
+                },
+                {
+                    "label": "Dive in fully",
+                    "next": "RANDOM",
+                    "meta": {
+                        "completePendingRelationship": {
+                            "costLabel": "Frequent outings",
+                            "monthlyCost": 75,
+                            "happyLabel": "Intense partnership",
+                            "happinessBoost": 4,
+                            "frequency": "frequent"
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "id": "h1k4",
+        "pool": "random",
+        "type": "goodEvent",
+        "text": "A night market is staging a neon drone show and creative workshop for {{cost}}.",
+        "details": "",
+        "config": {
+            "providers": [
+                "NeonGrid",
+                "PulseArcade Collective"
+            ],
+            "costRange": [
+                18,
+                80
+            ],
+            "happinessRange": [
+                1,
+                5
+            ]
+        }
+    },
+    {
+        "id": "j7m9",
+        "pool": "random",
+        "type": "goodEvent",
+        "text": "A pop-up cooking lab offers a tasting menu and hands-on lesson for {{cost}}.",
+        "details": "",
+        "config": {
+            "providers": [
+                "SavoryLab",
+                "Kitchen Playground"
+            ],
+            "costRange": [
+                25,
+                120
+            ],
+            "happinessRange": [
+                2,
+                5
+            ]
+        }
+    },
+    {
+        "id": "u5w4",
+        "pool": "random",
+        "type": "goodEvent",
+        "text": "A VR art collective invites Alex to a mindfulness residency for {{cost}}.",
+        "details": "",
+        "config": {
+            "providers": [
+                "Atlas VR",
+                "CalmFields"
+            ],
+            "costRange": [
+                30,
+                140
+            ],
+            "happinessRange": [
+                2,
+                5
+            ]
+        }
+    },
+    {
+        "id": "v6x2",
+        "pool": "random",
+        "type": "goodEvent",
+        "text": "A lakefront yoga retreat has an open slot for {{cost}}.",
+        "details": "",
+        "config": {
+            "providers": [
+                "StillWater",
+                "ZenCanopy"
+            ],
+            "costRange": [
+                40,
+                160
+            ],
+            "happinessRange": [
+                2,
+                5
+            ]
+        }
+    },
+    {
+        "id": "k8n2",
+        "pool": "random",
+        "type": "badEvent",
+        "text": "A radiator bursts in Alex's unit.",
+        "details": "",
+        "config": {
+            "moneyRange": [
+                120,
+                400
+            ],
+            "happinessRange": [
+                3,
+                7
+            ]
+        }
+    },
+    {
+        "id": "l5r6",
+        "pool": "random",
+        "type": "badEvent",
+        "text": "A close friend moves away unexpectedly.",
+        "details": "",
+        "config": {
+            "moneyRange": [
+                0,
+                0
+            ],
+            "happinessRange": [
+                4,
+                9
+            ]
+        }
+    },
+    {
+        "id": "m3s8",
+        "pool": "random",
+        "type": "hobbyOffer",
+        "text": "A community ceramics studio is offering memberships for {{cost}}/mo.",
+        "details": "",
+        "config": {
+            "provider": "ClayCloud",
+            "costRange": [
+                28,
+                40
+            ],
+            "happinessRange": [
+                2,
+                4
+            ],
+            "requiresId": true
+        }
+    },
+    {
+        "id": "n4t1",
+        "pool": "random",
+        "type": "hobbyOffer",
+        "text": "A neighborhood climbing gym drops its monthly rate to {{cost}}.",
+        "details": "",
+        "config": {
+            "provider": "Summit Yard",
+            "costRange": [
+                35,
+                55
+            ],
+            "happinessRange": [
+                2,
+                5
+            ],
+            "requiresId": false
+        }
+    },
+    {
+        "id": "w3b7",
+        "pool": "random",
+        "type": "hobbyOffer",
+        "text": "A retro gaming club invites Alex for {{cost}}/mo.",
+        "details": "",
+        "config": {
+            "provider": "PixelGuild",
+            "costRange": [
+                15,
+                30
+            ],
+            "happinessRange": [
+                1,
+                3
+            ],
+            "requiresId": true
+        }
+    },
+    {
+        "id": "p2v5",
+        "pool": "random",
+        "type": "relationshipBreakup",
+        "text": "Alex and their partner drift apart and decide to break up.",
+        "details": "",
+        "config": {
+            "lossRange": [
+                3,
+                9
+            ]
+        }
+    },
+    {
+        "id": "q8w3",
+        "pool": "random",
+        "type": "relationshipInvite",
+        "text": "Alex keeps running into someone at the climbing gym who wants to grab tea.",
+        "details": "",
+        "config": {
+            "next": "r0q9.html"
+        }
+    },
+    {
+        "id": "y2d5",
+        "pool": "random",
+        "type": "relationshipInvite",
+        "text": "A friend introduces Alex to a coworker who loves indie films and wants to meet.",
+        "details": "",
+        "config": {
+            "next": "r0q9.html"
+        }
+    },
+    {
+        "id": "s9y2",
+        "pool": "random",
+        "type": "promotionOffer",
+        "text": "Work offers Alex a team lead promotion worth {{raise}} more each month.",
+        "details": "It comes with more responsibility and the risk of extra stress.",
+        "config": {
+            "stress": "Team lead stress",
+            "raiseRange": [
+                50,
+                200
+            ]
+        }
+    },
+    {
+        "id": "x4f8",
+        "pool": "random",
+        "type": "promotionOffer",
+        "text": "A supervisor wants Alex to run evening operations for {{raise}} extra.",
+        "details": "It comes with more responsibility and the risk of extra stress.",
+        "config": {
+            "stress": "Operations stress",
+            "raiseRange": [
+                50,
+                200
+            ]
+        }
+    },
+    {
+        "id": "t4u7",
+        "pool": "random",
+        "type": "hobbyVerification",
+        "text": "{{hobbyName}} now requires ID verification to keep participating.",
+        "details": "",
+        "config": {}
+    }
+];
+
+    const embeddedJobRows = [
+    {
+        "group": "first-month-a",
+        "label": "Pull espresso at Skyline Roastery",
+        "effect": "Roastery Pay"
+    },
+    {
+        "group": "first-month-a",
+        "label": "Remote support shifts for Nightline",
+        "effect": "Nightline Support Pay"
+    },
+    {
+        "group": "first-month-b",
+        "label": "Warehouse inventory coordinator",
+        "effect": "Inventory Contract"
+    },
+    {
+        "group": "first-month-b",
+        "label": "Beta-test night apps",
+        "effect": "App Beta Income"
+    }
+];
+
+    const scenarioLibraryPromise = buildScenarioLibrary(utils);
 
     class UploadedLifeHost {
-        constructor(rootWindow) {
+        constructor(rootWindow, scenarioLibrary) {
             this.rootWindow = rootWindow;
             this.environment = environment;
             this.localStorageKey = 'uploaded-life-state-v1';
             this.state = this.loadState();
-            this.scenarios = scenarioLibrary;
+            const providedLibrary = scenarioLibrary || {};
+            this.scenarios = providedLibrary;
+            this.scenariosReady = Object.keys(providedLibrary).length > 0;
+            this.pendingStartArgs = null;
+            this.scenarioLoadError = null;
+            this.scenarioLoadModalVisible = false;
             this.pendingChoiceMeta = null;
             this.pendingImmediate = null;
             this.frameRefs = {
@@ -1180,6 +1736,11 @@
         }
 
         startNewRun({viaIntro} = {}) {
+            if (!this.scenariosReady) {
+                this.pendingStartArgs = {viaIntro};
+                this.showScenarioLoadingNotice();
+                return;
+            }
             this.state = this.createInitialState();
             this.persistState();
             const firstId = this.pickFirstScenario();
@@ -1381,549 +1942,718 @@
             const doc = this.frameRefs.currentFrameWindow?.document || document;
             this.modal.overlay.classList.remove('active');
             doc.body.classList.remove('modal-open');
+            this.scenarioLoadModalVisible = false;
+        }
+
+        setScenarioLibrary(library) {
+            const nextLibrary = library || {};
+            this.scenarios = nextLibrary;
+            this.scenariosReady = Object.keys(nextLibrary).length > 0;
+            this.scenarioLoadError = null;
+            if (this.scenarioLoadModalVisible) {
+                this.closeModal();
+            }
+            if (this.pendingStartArgs) {
+                const pending = this.pendingStartArgs;
+                this.pendingStartArgs = null;
+                this.startNewRun(pending);
+            }
+        }
+
+        handleScenarioLoadError(err) {
+            this.scenarioLoadError = err || new Error('Scenario data failed to load');
+            this.scenariosReady = false;
+            this.pendingStartArgs = null;
+            if (this.modal.overlay?.classList.contains('active')) {
+                this.closeModal();
+            }
+            this.showScenarioDataError();
+        }
+
+        showScenarioLoadingNotice() {
+            if (this.scenarioLoadError) {
+                this.showScenarioDataError();
+                return;
+            }
+            if (this.modal.overlay?.classList.contains('active')) {
+                return;
+            }
+            this.openModal({
+                body: 'Loading scenario data… please try again in a moment.',
+                actions: [{label: 'Okay', primary: true}],
+                dismissible: true,
+            });
+            this.scenarioLoadModalVisible = true;
+        }
+
+        showScenarioDataError() {
+            const targetWindow = this.rootWindow || window;
+            this.scenarioLoadModalVisible = false;
+            this.openModal({
+                body: 'Uploaded Life could not load the scenario data. Please refresh the page to try again.',
+                actions: [{
+                    label: 'Refresh',
+                    primary: true,
+                    handler: () => {
+                        try {
+                            targetWindow.location.reload();
+                        } catch (err) {
+                            window.location.reload();
+                        }
+                    },
+                }],
+                dismissible: false,
+            });
         }
     }
 
-    function buildScenarioLibrary(utils) {
+
+    async function buildScenarioLibrary(utils) {
+        const [scenarioRowsRaw, jobRowsRaw] = await Promise.all([
+            loadCsvResource('Scenarios/scenarios.csv').catch((err) => {
+                console.warn('Uploaded Life: failed to load scenarios.csv, using embedded data', err);
+                return null;
+            }),
+            loadCsvResource('Scenarios/jobs.csv').catch((err) => {
+                console.warn('Uploaded Life: failed to load jobs.csv, using embedded data', err);
+                return null;
+            }),
+        ]);
+
+        const scenarioRows = ensureRows(
+            scenarioRowsRaw,
+            embeddedScenarioRows,
+            'scenario data',
+            (row) => row?.id && row?.type,
+        );
+        const jobRows = ensureRows(
+            jobRowsRaw,
+            embeddedJobRows,
+            'job data',
+            (row) => row?.group && row?.label && row?.effect,
+        );
+
+        const jobsByGroup = jobRows.reduce((acc, job) => {
+            const group = (job.group || '').trim();
+            if (!group) {
+                return acc;
+            }
+            acc[group] = acc[group] || [];
+            acc[group].push({
+                label: job.label || '',
+                effect: job.effect || '',
+            });
+            return acc;
+        }, {});
+
         const library = {};
         const add = (def) => {
-            library[def.id] = def;
+            if (def?.id) {
+                library[def.id] = def;
+            }
         };
 
-        const firstMonthConfigs = [
-            {
-                id: 'a1r7',
-                text: 'Month one as Alex. Rent is due and bills are looming. Two gigs are ready if Alex commits.',
-                jobs: [
-                    {label: 'Pull espresso at Skyline Roastery', effect: 'Roastery Pay'},
-                    {label: 'Remote support shifts for Nightline', effect: 'Nightline Support Pay'},
-                ],
-            },
-            {
-                id: 'd8k3',
-                text: 'Alex can reboot their career this month by either managing inventory or testing apps overnight.',
-                jobs: [
-                    {label: 'Warehouse inventory coordinator', effect: 'Inventory Contract'},
-                    {label: 'Beta-test night apps', effect: 'App Beta Income'},
-                ],
-            },
-        ];
+        const generateRangeValue = (range, fallback = 0) => {
+            if (!Array.isArray(range) || range.length < 2) {
+                return fallback;
+            }
+            const min = Number(range[0]);
+            const max = Number(range[1]);
+            return utils.weightedBetween(min, max);
+        };
 
-        firstMonthConfigs.forEach((config) => {
-            add({
-                id: config.id,
-                pool: 'core',
-                build: () => {
-                    const choices = config.jobs.map((job) => {
-                        const amount = utils.weightedBetween(1100, 1500);
-                        return {
-                            label: job.label,
-                            next: 'b4m2.html',
-                            econEffect: {name: job.effect, amount},
-                            meta: {economyMeta: {markJob: true}},
-                        };
-                    });
-                    return {text: config.text, choices};
-                },
-            });
+        scenarioRows.forEach((row) => {
+            const config = parseScenarioConfig(row.config);
+            const def = createScenarioDefinition(row, config);
+            if (def) {
+                add(def);
+            }
         });
 
-        add({
-            id: 'b4m2',
-            pool: 'core',
-            build: () => ({
-                text: 'The employer portal is asking for a government ID upload before payroll will run.',
-                details: 'Declining only delays everything—modern workplaces expect verification.',
-                choices: [
-                    {label: 'Submit the documents', next: 'c7t9.html', idService: 'WorkGate HR'},
-                    {
-                        label: 'Decline (for now)',
-                        next: 'c7t9.html',
-                        requireModal: 'It would be nice to skip, but Alex has to verify with the employer to stay paid.'
-                    },
-                ],
-            }),
-        });
+        return library;
 
-        add({
-            id: 'c7t9',
-            pool: 'core',
-            build: () => {
-                const streamCost = utils.weightedBetween(12, 22);
-                const streamHappy = utils.weightedBetween(1, 3);
-                const leagueCost = utils.weightedBetween(30, 45);
-                const leagueHappy = utils.weightedBetween(2, 4);
-                return {
-                    text: `Alex needs a recurring joy. Streaming costs $${streamCost}/mo while a bowling league runs $${leagueCost}/mo.`,
-                    details: 'Both would soften the edges of the week in different ways.',
-                    choices: [
-                        {
-                            label: 'Pick the streaming bundle',
-                            next: 'd2q5.html',
-                            meta: {
-                                addHobby: {
-                                    hobbyId: 'streaming',
-                                    costLabel: 'Stream bundle subscription',
-                                    monthlyCost: streamCost,
-                                    happyLabel: 'Weekly story binge',
-                                    happinessBoost: streamHappy,
-                                    provider: 'StreamDeck',
-                                    requiresId: true,
-                                },
-                            },
-                        },
-                        {
-                            label: 'Join the bowling league',
-                            next: 'd2q5.html',
-                            meta: {
-                                addHobby: {
-                                    hobbyId: 'bowling',
-                                    costLabel: 'League dues',
-                                    monthlyCost: leagueCost,
-                                    happyLabel: 'League friends',
-                                    happinessBoost: leagueHappy,
-                                    provider: 'City Lanes',
-                                    requiresId: false,
-                                },
-                            },
-                        },
-                    ],
-                };
-            },
-        });
+        function ensureRows(rows, fallback, label, validator) {
+            if (rows && rows.length && (!validator || rows.every((row) => validator(row)))) {
+                return rows;
+            }
+            console.warn(`Uploaded Life: ${label} missing or empty; using embedded defaults`);
+            return cloneData(fallback);
+        }
 
-        add({
-            id: 'd2q5',
-            pool: 'core',
-            build: () => {
-                const events = [
-                    {
-                        story: 'Alex drops their phone in a puddle.',
-                        money: utils.weightedBetween(180, 320),
-                        happiness: utils.weightedBetween(3, 7)
-                    },
-                    {
-                        story: 'A surprise dentist bill appears after a lingering toothache.',
-                        money: utils.weightedBetween(120, 400),
-                        happiness: utils.weightedBetween(2, 5)
-                    },
-                    {
-                        story: 'A roommate moves out without notice, leaving Alex with costs.',
-                        money: utils.weightedBetween(200, 450),
-                        happiness: utils.weightedBetween(4, 8)
-                    },
-                ];
-                const hit = utils.pick(events);
-                return {
-                    text: hit.story,
-                    details: 'Alex can throw money at the problem to soften the blow or push through and absorb the emotional hit.',
-                    choices: [
-                        {
-                            label: 'Handle it immediately',
-                            next: 'e5v1.html',
-                            immediate: {money: -hit.money, happiness: -Math.ceil(hit.happiness / 2)}
-                        },
-                        {label: 'Ignore it for now', next: 'e5v1.html', immediate: {happiness: -hit.happiness}},
-                    ],
-                };
-            },
-        });
-
-        add({
-            id: 'e5v1',
-            pool: 'core',
-            build: () => ({
-                text: 'Alex is tired of eating dinner alone. Is it better to meet people face-to-face or download an app?',
-                choices: [
-                    {label: 'Meet people in person', next: 'g6k8.html', meta: {setDatingMethod: 'inperson'}},
-                    {label: 'Download an app', next: 'f9h3.html', meta: {setDatingMethod: 'app'}},
-                ],
-            }),
-        });
-
-        add({
-            id: 'f9h3',
-            pool: 'core',
-            build: () => {
-                const app = utils.pick(['HeartMatch', 'Kindred', 'PulseDate']);
-                return {
-                    text: `${app} requires ID verification before Alex can message anyone.`,
-                    choices: [
-                        {label: 'Upload the ID', next: 'g6k8.html', idService: app, meta: {setDatingMethod: 'app'}},
-                        {label: 'Skip the app and go offline', next: 'g6k8.html', meta: {setDatingMethod: 'inperson'}},
-                    ],
-                };
-            },
-        });
-
-        add({
-            id: 'g6k8',
-            pool: 'core',
-            build: (state) => {
-                const method = state.datingMethod || 'inperson';
-                const chance = method === 'app' ? 0.75 : 0.25;
-                const success = Math.random() < chance;
-                if (success) {
+        function createScenarioDefinition(row, config) {
+            const type = (row.type || '').trim();
+            switch (type) {
+                case 'jobSelection':
                     return {
-                        text: `Alex found someone! Thanks to the ${method === 'app' ? 'app' : 'chance meetings'}, dates are now happening.`,
-                        choices: [
-                            {
-                                label: 'Go out occasionally',
-                                next: 'RANDOM',
-                                meta: {
-                                    applyRelationship: {
-                                        costLabel: 'Occasional date nights',
-                                        monthlyCost: 25,
-                                        happyLabel: 'Shared connection',
-                                        happinessBoost: 2,
-                                        frequency: 'occasional',
-                                    },
-                                    clearDatingMethod: true,
-                                },
-                            },
-                            {
-                                label: 'Go out frequently',
-                                next: 'RANDOM',
-                                meta: {
-                                    applyRelationship: {
-                                        costLabel: 'Frequent date nights',
-                                        monthlyCost: 75,
-                                        happyLabel: 'Romantic whirlwind',
-                                        happinessBoost: 4,
-                                        frequency: 'frequent',
-                                    },
-                                    clearDatingMethod: true,
-                                },
-                            },
-                        ],
+                        id: row.id,
+                        pool: row.pool,
+                        build: () => {
+                            const jobEntries = jobsByGroup[config.jobGroup] || [];
+                            const choices = jobEntries.map((job) => {
+                                const amount = utils.weightedBetween(1100, 1500);
+                                return {
+                                    label: job.label,
+                                    next: config.next || 'RANDOM',
+                                    econEffect: {name: job.effect, amount},
+                                    meta: {economyMeta: {markJob: true}},
+                                };
+                            });
+                            return {
+                                text: row.text,
+                                details: row.details || undefined,
+                                choices,
+                            };
+                        },
                     };
-                }
-                return {
-                    text: 'No matches stuck this month. Loneliness weighs even heavier now.',
-                    choices: [
-                        {
-                            label: 'Move on alone',
-                            next: 'RANDOM',
-                            immediate: {happiness: -10},
-                            meta: {clearDatingMethod: true}
-                        },
-                        {
-                            label: 'Hangout with a friend',
-                            next: 'RANDOM',
-                            immediate: {money: -25, happiness: -8},
-                            meta: {clearDatingMethod: true}
-                        },
-                    ],
-                };
-            },
-        });
-
-        add({
-            id: 'r0q9',
-            pool: 'auxiliary',
-            build: (state) => ({
-                text: 'How often should Alex go out with this new partner?',
-                choices: [
-                    {
-                        label: 'Keep it occasional',
-                        next: 'RANDOM',
-                        meta: {
-                            completePendingRelationship: {
-                                costLabel: 'Occasional outings',
-                                monthlyCost: 25,
-                                happyLabel: 'Steady partnership',
-                                happinessBoost: 2,
-                                frequency: 'occasional',
-                            },
-                        },
-                    },
-                    {
-                        label: 'Dive in fully',
-                        next: 'RANDOM',
-                        meta: {
-                            completePendingRelationship: {
-                                costLabel: 'Frequent outings',
-                                monthlyCost: 75,
-                                happyLabel: 'Intense partnership',
-                                happinessBoost: 4,
-                                frequency: 'frequent',
-                            },
-                        },
-                    },
-                ],
-            }),
-        });
-
-        const goodEvents = [
-            {
-                id: 'h1k4',
-                description: 'A night market is staging a neon drone show and creative workshop for $${cost}.',
-                providers: ['NeonGrid', 'PulseArcade Collective'],
-                cost: [18, 80],
-                happiness: [1, 5],
-            },
-            {
-                id: 'j7m9',
-                description: 'A pop-up cooking lab offers a tasting menu and hands-on lesson for $${cost}.',
-                providers: ['SavoryLab', 'Kitchen Playground'],
-                cost: [25, 120],
-                happiness: [2, 5],
-            },
-            {
-                id: 'u5w4',
-                description: 'A VR art collective invites Alex to a mindfulness residency for $${cost}.',
-                providers: ['Atlas VR', 'CalmFields'],
-                cost: [30, 140],
-                happiness: [2, 5],
-            },
-            {
-                id: 'v6x2',
-                description: 'A lakefront yoga retreat has an open slot for $${cost}.',
-                providers: ['StillWater', 'ZenCanopy'],
-                cost: [40, 160],
-                happiness: [2, 5],
-            },
-        ];
-
-        goodEvents.forEach((event) => {
-            add({
-                id: event.id,
-                pool: 'random',
-                build: () => {
-                    const cost = utils.weightedBetween(event.cost[0], event.cost[1]);
-                    const happy = utils.weightedBetween(event.happiness[0], event.happiness[1]);
-                    const formattedCost = currency.format(cost);
-                    const description = event.description
-                        .replace(/\$\$\{cost\}/g, formattedCost)
-                        .replace(/\{cost\}/g, formattedCost);
+                case 'static':
                     return {
-                        text: description,
-                        choices: [
-                            {
+                        id: row.id,
+                        pool: row.pool,
+                        build: () => ({
+                            text: row.text,
+                            details: row.details || undefined,
+                            choices: cloneData(config.choices || []),
+                        }),
+                    };
+                case 'hobbyStarter':
+                    return {
+                        id: row.id,
+                        pool: row.pool,
+                        build: () => {
+                            const options = Array.isArray(config.options) ? config.options : [];
+                            const placeholders = {};
+                            const choices = options.map((option) => {
+                                const cost = generateRangeValue(option.costRange);
+                                const happiness = generateRangeValue(option.happinessRange);
+                                const key = option.key ? `${option.key}Cost` : null;
+                                if (key) {
+                                    placeholders[key] = currency.format(cost);
+                                }
+                                const hobbyMeta = option.hobby ? {...option.hobby} : {};
+                                const choice = {
+                                    label: option.label,
+                                    next: option.next || 'RANDOM',
+                                    meta: {
+                                        addHobby: {
+                                            ...hobbyMeta,
+                                            monthlyCost: cost,
+                                            happinessBoost: happiness,
+                                        },
+                                    },
+                                };
+                                if (hobbyMeta.requiresId) {
+                                    choice.idRequirement = {services: [hobbyMeta.provider]};
+                                }
+                                return choice;
+                            });
+                            return {
+                                text: replacePlaceholders(row.text, placeholders),
+                                details: row.details ? replacePlaceholders(row.details, placeholders) : undefined,
+                                choices,
+                            };
+                        },
+                    };
+                case 'incidentChoice':
+                    return {
+                        id: row.id,
+                        pool: row.pool,
+                        build: () => {
+                            const events = Array.isArray(config.events) ? config.events : [];
+                            const hit = utils.pick(events);
+                            if (!hit) {
+                                return {text: row.text, details: row.details || undefined, choices: []};
+                            }
+                            const money = generateRangeValue(hit.moneyRange);
+                            const happiness = generateRangeValue(hit.happinessRange);
+                            const replacements = {story: hit.story || ''};
+                            return {
+                                text: replacePlaceholders(row.text, replacements),
+                                details: row.details ? replacePlaceholders(row.details, replacements) : undefined,
+                                choices: [
+                                    {
+                                        label: 'Handle it immediately',
+                                        next: config.next || 'RANDOM',
+                                        immediate: {money: -money, happiness: -Math.ceil(happiness / 2)},
+                                    },
+                                    {
+                                        label: 'Ignore it for now',
+                                        next: config.next || 'RANDOM',
+                                        immediate: {happiness: -happiness},
+                                    },
+                                ],
+                            };
+                        },
+                    };
+                case 'datingApp':
+                    return {
+                        id: row.id,
+                        pool: row.pool,
+                        build: () => {
+                            const apps = Array.isArray(config.apps) ? config.apps : [];
+                            const app = utils.pick(apps) || '';
+                            const replacements = {app};
+                            const firstChoice = {
+                                label: 'Upload the ID',
+                                next: config.next || 'RANDOM',
+                                idService: app || undefined,
+                                meta: {setDatingMethod: 'app'},
+                            };
+                            if (!firstChoice.idService) {
+                                delete firstChoice.idService;
+                            }
+                            return {
+                                text: replacePlaceholders(row.text, replacements),
+                                details: row.details ? replacePlaceholders(row.details, replacements) : undefined,
+                                choices: [
+                                    firstChoice,
+                                    {
+                                        label: 'Skip the app and go offline',
+                                        next: config.next || 'RANDOM',
+                                        meta: {setDatingMethod: 'inperson'},
+                                    },
+                                ],
+                            };
+                        },
+                    };
+                case 'relationshipOutcome':
+                    return {
+                        id: row.id,
+                        pool: row.pool,
+                        build: (state = {}) => {
+                            const method = state.datingMethod || 'inperson';
+                            const chance = method === 'app' ? 0.75 : 0.25;
+                            const success = Math.random() < chance;
+                            if (success) {
+                                const text = method === 'app' ? config.successTextApp : config.successTextInperson;
+                                return {
+                                    text: text || '',
+                                    details: row.details || undefined,
+                                    choices: cloneData(config.successChoices || []),
+                                };
+                            }
+                            return {
+                                text: config.failureText || '',
+                                details: row.details || undefined,
+                                choices: cloneData(config.failureChoices || []),
+                            };
+                        },
+                    };
+                case 'pendingRelationship':
+                    return {
+                        id: row.id,
+                        pool: row.pool,
+                        build: () => ({
+                            text: row.text,
+                            details: row.details || undefined,
+                            choices: cloneData(config.choices || []),
+                        }),
+                    };
+                case 'goodEvent':
+                    return {
+                        id: row.id,
+                        pool: row.pool,
+                        build: () => {
+                            const cost = generateRangeValue(config.costRange);
+                            const happiness = generateRangeValue(config.happinessRange);
+                            const replacements = {cost: currency.format(cost)};
+                            const joinChoice = {
                                 label: 'Join in',
                                 next: 'RANDOM',
-                                immediate: {money: -cost, happiness: happy},
-                                idRequirement: {services: event.providers},
-                            },
-                            {
-                                label: 'Skip it',
-                                next: 'RANDOM',
-                            },
-                        ],
+                                immediate: {money: -cost, happiness},
+                            };
+                            if (Array.isArray(config.providers) && config.providers.length) {
+                                joinChoice.idRequirement = {services: config.providers};
+                            }
+                            return {
+                                text: replacePlaceholders(row.text, replacements),
+                                details: row.details ? replacePlaceholders(row.details, replacements) : undefined,
+                                choices: [joinChoice, {label: 'Skip it', next: 'RANDOM'}],
+                            };
+                        },
                     };
-                },
-            });
-        });
-
-        const badEvents = [
-            {id: 'k8n2', text: 'A radiator bursts in Alex\'s unit.', money: [120, 400], happiness: [3, 7]},
-            {id: 'l5r6', text: 'A close friend moves away unexpectedly.', money: [0, 0], happiness: [4, 9]},
-        ];
-
-        badEvents.forEach((event) => {
-            add({
-                id: event.id,
-                pool: 'random',
-                build: () => {
-                    const money = utils.weightedBetween(event.money[0], event.money[1]);
-                    const happy = utils.weightedBetween(event.happiness[0], event.happiness[1]);
+                case 'badEvent':
                     return {
-                        text: event.text,
-                        choices: [
-                            {
-                                label: 'Spend to soften it',
-                                next: 'RANDOM',
-                                immediate: {money: -money, happiness: -Math.ceil(happy / 2)}
-                            },
-                            {label: 'Tough it out', next: 'RANDOM', immediate: {happiness: -happy}},
-                        ],
+                        id: row.id,
+                        pool: row.pool,
+                        build: () => {
+                            const money = generateRangeValue(config.moneyRange);
+                            const happiness = generateRangeValue(config.happinessRange);
+                            return {
+                                text: row.text,
+                                details: row.details || undefined,
+                                choices: [
+                                    {
+                                        label: 'Spend to soften it',
+                                        next: 'RANDOM',
+                                        immediate: {money: -money, happiness: -Math.ceil(happiness / 2)},
+                                    },
+                                    {
+                                        label: 'Tough it out',
+                                        next: 'RANDOM',
+                                        immediate: {happiness: -happiness},
+                                    },
+                                ],
+                            };
+                        },
                     };
-                },
-            });
-        });
-
-        const hobbyOffers = [
-            {
-                id: 'm3s8',
-                text: 'A community ceramics studio is offering memberships for $${cost}/mo.',
-                provider: 'ClayCloud',
-                cost: [28, 40],
-                happiness: [2, 4],
-                requiresId: true,
-            },
-            {
-                id: 'n4t1',
-                text: 'A neighborhood climbing gym drops its monthly rate to $${cost}.',
-                provider: 'Summit Yard',
-                cost: [35, 55],
-                happiness: [2, 5],
-                requiresId: false,
-            },
-            {
-                id: 'w3b7',
-                text: 'A retro gaming club invites Alex for $${cost}/mo.',
-                provider: 'PixelGuild',
-                cost: [15, 30],
-                happiness: [1, 3],
-                requiresId: true,
-            },
-        ];
-
-        hobbyOffers.forEach((offer) => {
-            add({
-                id: offer.id,
-                pool: 'random',
-                build: () => {
-                    const cost = utils.weightedBetween(offer.cost[0], offer.cost[1]);
-                    const happy = utils.weightedBetween(offer.happiness[0], offer.happiness[1]);
-                    const amountLabel = currency.format(cost);
+                case 'hobbyOffer':
                     return {
-                        text: offer.text.replace(/\$\$\{cost\}/g, amountLabel),
-                        choices: [
-                            {label: 'Skip it', next: 'RANDOM'},
-                            {
+                        id: row.id,
+                        pool: row.pool,
+                        build: () => {
+                            const cost = generateRangeValue(config.costRange);
+                            const happiness = generateRangeValue(config.happinessRange);
+                            const replacements = {cost: currency.format(cost)};
+                            const joinChoice = {
                                 label: 'Join the hobby',
                                 next: 'RANDOM',
                                 meta: {
                                     addHobby: {
-                                        costLabel: `${offer.provider} membership`,
+                                        costLabel: `${config.provider} membership`,
                                         monthlyCost: cost,
-                                        happyLabel: `${offer.provider} joy`,
-                                        happinessBoost: happy,
-                                        provider: offer.provider,
-                                        requiresId: offer.requiresId,
+                                        happyLabel: `${config.provider} joy`,
+                                        happinessBoost: happiness,
+                                        provider: config.provider,
+                                        requiresId: !!config.requiresId,
                                     },
                                 },
-                                idRequirement: offer.requiresId ? {services: [offer.provider]} : null,
-                            },
-                        ].filter(Boolean),
+                            };
+                            if (config.requiresId) {
+                                joinChoice.idRequirement = {services: [config.provider]};
+                            }
+                            return {
+                                text: replacePlaceholders(row.text, replacements),
+                                details: row.details ? replacePlaceholders(row.details, replacements) : undefined,
+                                choices: [{label: 'Skip it', next: 'RANDOM'}, joinChoice],
+                            };
+                        },
                     };
-                },
-            });
-        });
-
-        add({
-            id: 'p2v5',
-            pool: 'random',
-            eligible: (state) => !!state.relationship,
-            build: () => {
-                const loss = utils.weightedBetween(3, 9);
-                return {
-                    text: 'Alex and their partner drift apart and decide to break up.',
-                    choices: [
-                        {
-                            label: 'Lean on friends',
-                            next: 'RANDOM',
-                            meta: {removeRelationship: true},
-                            immediate: {money: -20, happiness: -Math.ceil(loss / 2)}
-                        },
-                        {
-                            label: 'Shut down emotionally',
-                            next: 'RANDOM',
-                            meta: {removeRelationship: true},
-                            immediate: {happiness: -loss}
-                        },
-                    ],
-                };
-            },
-        });
-
-        const relationshipInvites = [
-            {
-                id: 'q8w3',
-                text: 'Alex keeps running into someone at the climbing gym who wants to grab tea.',
-            },
-            {
-                id: 'y2d5',
-                text: 'A friend introduces Alex to a coworker who loves indie films and wants to meet.',
-            },
-        ];
-
-        relationshipInvites.forEach((invite) => {
-            add({
-                id: invite.id,
-                pool: 'random',
-                eligible: (state) => !state.relationship,
-                build: () => ({
-                    text: invite.text,
-                    choices: [
-                        {label: 'Stay focused solo', next: 'RANDOM'},
-                        {label: 'See where it goes', next: 'r0q9.html', meta: {setPendingRelationship: {}}},
-                    ],
-                }),
-            });
-        });
-
-        const promotions = [
-            {
-                id: 's9y2',
-                text: 'Work offers Alex a team lead promotion worth $${raise} more each month.',
-                stress: 'Team lead stress'
-            },
-            {
-                id: 'x4f8',
-                text: 'A supervisor wants Alex to run evening operations for $${raise} extra.',
-                stress: 'Operations stress'
-            },
-        ];
-
-        promotions.forEach((promo) => {
-            add({
-                id: promo.id,
-                pool: 'random',
-                build: () => {
-                    const raise = utils.weightedBetween(50, 200);
-                    const raiseLabel = currency.format(raise);
+                case 'relationshipBreakup':
                     return {
-                        text: promo.text.replace(/\$\$\{raise\}/g, raiseLabel),
-                        details: 'It comes with more responsibility and the risk of extra stress.',
-                        choices: [
-                            {
-                                label: 'Accept the promotion',
-                                next: 'RANDOM',
-                                econEffect: {name: 'Promotion bump', amount: raise},
-                                meta: {
-                                    additionalHappinessEffect: Math.random() < 0.25 ? {
-                                        name: promo.stress,
-                                        amount: -1
-                                    } : null,
-                                },
-                            },
-                            {label: 'Decline and keep balance', next: 'RANDOM'},
-                        ],
-                    };
-                },
-            });
-        });
-
-        add({
-            id: 't4u7',
-            pool: 'random',
-            eligible: (state) => (state.hobbies || []).some((hobby) => hobby.requiresId && !hobby.idSubmitted),
-            build: (state) => {
-                const hobby = (state.hobbies || []).find((item) => item.requiresId && !item.idSubmitted);
-                return {
-                    text: `${hobby.name} now requires ID verification to keep participating.`,
-                    choices: [
-                        {
-                            label: 'Submit ID to keep it',
-                            next: 'RANDOM',
-                            meta: {verifyHobby: {hobbyId: hobby.id, provider: hobby.provider}}
+                        id: row.id,
+                        pool: row.pool,
+                        eligible: (state) => !!state.relationship,
+                        build: () => {
+                            const loss = generateRangeValue(config.lossRange || [3, 9]);
+                            return {
+                                text: row.text,
+                                details: row.details || undefined,
+                                choices: [
+                                    {
+                                        label: 'Lean on friends',
+                                        next: 'RANDOM',
+                                        meta: {removeRelationship: true},
+                                        immediate: {money: -20, happiness: -Math.ceil(loss / 2)},
+                                    },
+                                    {
+                                        label: 'Shut down emotionally',
+                                        next: 'RANDOM',
+                                        meta: {removeRelationship: true},
+                                        immediate: {happiness: -loss},
+                                    },
+                                ],
+                            };
                         },
-                        {label: 'Drop the hobby', next: 'RANDOM', meta: {removeHobby: hobby.id}},
-                    ],
-                };
-            },
-        });
+                    };
+                case 'relationshipInvite':
+                    return {
+                        id: row.id,
+                        pool: row.pool,
+                        eligible: (state) => !state.relationship,
+                        build: () => ({
+                            text: row.text,
+                            details: row.details || undefined,
+                            choices: [
+                                {label: 'Stay focused solo', next: 'RANDOM'},
+                                {label: 'See where it goes', next: config.next || 'RANDOM', meta: {setPendingRelationship: {}}},
+                            ],
+                        }),
+                    };
+                case 'promotionOffer':
+                    return {
+                        id: row.id,
+                        pool: row.pool,
+                        build: () => {
+                            const raise = generateRangeValue(config.raiseRange);
+                            const replacements = {raise: currency.format(raise)};
+                            const stress = config.stress;
+                            return {
+                                text: replacePlaceholders(row.text, replacements),
+                                details: row.details ? replacePlaceholders(row.details, replacements) : undefined,
+                                choices: [
+                                    {
+                                        label: 'Accept the promotion',
+                                        next: 'RANDOM',
+                                        econEffect: {name: 'Promotion bump', amount: raise},
+                                        meta: {
+                                            additionalHappinessEffect: Math.random() < 0.25 ? {name: stress, amount: -1} : null,
+                                        },
+                                    },
+                                    {label: 'Decline and keep balance', next: 'RANDOM'},
+                                ],
+                            };
+                        },
+                    };
+                case 'hobbyVerification':
+                    return {
+                        id: row.id,
+                        pool: row.pool,
+                        eligible: (state) => (state.hobbies || []).some((hobby) => hobby.requiresId && !hobby.idSubmitted),
+                        build: (state) => {
+                            const hobby = (state.hobbies || []).find((item) => item.requiresId && !item.idSubmitted);
+                            if (!hobby) {
+                                return {text: row.text, details: row.details || undefined, choices: []};
+                            }
+                            const replacements = {hobbyName: hobby.name || ''};
+                            return {
+                                text: replacePlaceholders(row.text, replacements),
+                                details: row.details ? replacePlaceholders(row.details, replacements) : undefined,
+                                choices: [
+                                    {
+                                        label: 'Submit ID to keep it',
+                                        next: 'RANDOM',
+                                        meta: {verifyHobby: {hobbyId: hobby.id, provider: hobby.provider}},
+                                    },
+                                    {label: 'Drop the hobby', next: 'RANDOM', meta: {removeHobby: hobby.id}},
+                                ],
+                            };
+                        },
+                    };
+                default:
+                    console.warn(`Uploaded Life: unknown scenario type "${type}" for ${row.id}`);
+                    return null;
+            }
+        }
+    }
 
-        return library;
+    async function loadCsvResource(relativePath) {
+        const target = resolveAssetUrl(relativePath);
+        const errors = [];
+
+        if (typeof fetch === 'function') {
+            try {
+                const response = await fetch(target, {credentials: 'same-origin'});
+                if (!response.ok) {
+                    throw new Error(`Failed to load ${relativePath}: ${response.status}`);
+                }
+                const text = await response.text();
+                return parseCsv(text);
+            } catch (err) {
+                errors.push(err);
+            }
+        }
+
+        if (typeof XMLHttpRequest === 'function') {
+            try {
+                const fallbackText = await loadTextViaXhr(target);
+                return parseCsv(fallbackText);
+            } catch (err) {
+                errors.push(err);
+            }
+        }
+
+        if (typeof document !== 'undefined' && typeof document.createElement === 'function') {
+            try {
+                const iframeText = await loadTextViaIframe(target);
+                return parseCsv(iframeText);
+            } catch (err) {
+                errors.push(err);
+            }
+        }
+
+        const detail = errors.length ? ` (${errors.map((err) => err?.message || err).join('; ')})` : '';
+        throw new Error(`No supported method to load scenario data${detail}`);
+    }
+
+    function resolveAssetUrl(relativePath) {
+        if (!scriptBase) {
+            return relativePath;
+        }
+        try {
+            return new URL(relativePath, scriptBase).href;
+        } catch (err) {
+            return relativePath;
+        }
+    }
+
+    function loadTextViaXhr(url) {
+        return new Promise((resolve, reject) => {
+            if (typeof XMLHttpRequest === 'undefined') {
+                reject(new Error('XMLHttpRequest is unavailable'));
+                return;
+            }
+            try {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 0 || (xhr.status >= 200 && xhr.status < 300)) {
+                            resolve(xhr.responseText);
+                        } else {
+                            reject(new Error(`Failed to load ${url}: ${xhr.status}`));
+                        }
+                    }
+                };
+                xhr.onerror = () => reject(new Error(`Failed to load ${url}`));
+                xhr.send(null);
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    function loadTextViaIframe(url) {
+        return new Promise((resolve, reject) => {
+            const doc = document;
+            const body = doc?.body;
+            if (!doc || !body) {
+                reject(new Error('Document body unavailable for iframe load'));
+                return;
+            }
+            const iframe = doc.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            iframe.style.visibility = 'hidden';
+            iframe.setAttribute('aria-hidden', 'true');
+            const cleanup = () => {
+                iframe.onload = null;
+                iframe.onerror = null;
+                if (iframe.parentNode) {
+                    iframe.parentNode.removeChild(iframe);
+                }
+            };
+            iframe.onload = () => {
+                try {
+                    const frameDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                    const text = frameDoc?.body?.innerText || frameDoc?.body?.textContent || '';
+                    cleanup();
+                    resolve(text);
+                } catch (err) {
+                    cleanup();
+                    reject(err);
+                }
+            };
+            iframe.onerror = () => {
+                cleanup();
+                reject(new Error(`Failed to load ${url}`));
+            };
+            iframe.src = url;
+            body.appendChild(iframe);
+        });
+    }
+
+    function parseCsv(text) {
+        const output = [];
+        if (!text) {
+            return output;
+        }
+        const lines = text.replace(/\r\n/g, '\n').split('\n');
+        let headers = null;
+        lines.forEach((raw) => {
+            const line = raw.trimEnd();
+            if (!line) {
+                return;
+            }
+            const cells = parseCsvLine(line);
+            if (!cells.length) {
+                return;
+            }
+            if (!headers) {
+                headers = cells;
+                return;
+            }
+            const entry = {};
+            headers.forEach((header, idx) => {
+                entry[header] = cells[idx] ?? '';
+            });
+            output.push(entry);
+        });
+        return output;
+    }
+
+    function parseCsvLine(line) {
+        const cells = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i += 1) {
+            const char = line[i];
+            if (inQuotes) {
+                if (char === '"') {
+                    if (line[i + 1] === '"') {
+                        current += '"';
+                        i += 1;
+                    } else {
+                        inQuotes = false;
+                    }
+                } else {
+                    current += char;
+                }
+            } else if (char === '"') {
+                inQuotes = true;
+            } else if (char === ',') {
+                cells.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        cells.push(current.trim());
+        return cells;
+    }
+
+    function parseScenarioConfig(value) {
+        if (!value) {
+            return {};
+        }
+        if (typeof value === 'object') {
+            return value;
+        }
+        try {
+            return JSON.parse(value);
+        } catch (err) {
+            console.warn('Uploaded Life: unable to parse scenario config', value, err);
+            return {};
+        }
+    }
+
+    function replacePlaceholders(text, values) {
+        if (!text) {
+            return '';
+        }
+        return text.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (match, key) => {
+            const replacement = values?.[key];
+            return typeof replacement === 'undefined' ? match : replacement;
+        });
+    }
+
+    function cloneData(value) {
+        if (value == null) {
+            return value;
+        }
+        return JSON.parse(JSON.stringify(value));
     }
 
     if (!root.__uploadedLifeHost) {
-        root.__uploadedLifeHost = new UploadedLifeHost(root);
+        root.__uploadedLifeHost = new UploadedLifeHost(root, {});
     }
+    const hostInstance = root.__uploadedLifeHost;
 
-    document.addEventListener('DOMContentLoaded', () => {
-        root.__uploadedLifeHost.attachPage(window);
+    scenarioLibraryPromise.then((library) => {
+        hostInstance.setScenarioLibrary(library);
+    }).catch((err) => {
+        console.error('Uploaded Life: unable to initialize scenarios', err);
+        hostInstance.handleScenarioLoadError(err);
     });
+
+    const attachHost = () => {
+        hostInstance.attachPage(window);
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attachHost);
+    } else {
+        attachHost();
+    }
 })();
