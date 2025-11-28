@@ -109,7 +109,6 @@
     }
 
 
-
     const scenarioLibraryPromise = buildScenarioLibrary(utils);
 
     class UploadedLifeHost {
@@ -2166,7 +2165,11 @@
                             details: row.details || undefined,
                             choices: [
                                 {label: 'Stay focused solo', next: 'RANDOM'},
-                                {label: 'See where it goes', next: config.next || 'RANDOM', meta: {setPendingRelationship: {}}},
+                                {
+                                    label: 'See where it goes',
+                                    next: config.next || 'RANDOM',
+                                    meta: {setPendingRelationship: {}}
+                                },
                             ],
                         }),
                     };
@@ -2188,7 +2191,10 @@
                                         next: 'RANDOM',
                                         econEffect: {name: 'Promotion bump', amount: raise},
                                         meta: {
-                                            additionalHappinessEffect: Math.random() < 0.25 ? {name: stress, amount: -1} : null,
+                                            additionalHappinessEffect: Math.random() < 0.25 ? {
+                                                name: stress,
+                                                amount: -1
+                                            } : null,
                                         },
                                     },
                                     {label: 'Decline and keep balance', next: 'RANDOM'},

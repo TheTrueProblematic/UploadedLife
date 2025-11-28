@@ -1,5 +1,22 @@
 # Uploaded Life (Public Build)
 
+<!-- TOC -->
+* [Uploaded Life (Public Build)](#uploaded-life-public-build)
+  * [Purpose and Scope](#purpose-and-scope)
+  * [Narrative Premise](#narrative-premise)
+  * [Application Architecture](#application-architecture)
+  * [Game Loop and Mechanics](#game-loop-and-mechanics)
+  * [Scenario Library Summary](#scenario-library-summary)
+  * [Asset Inventory](#asset-inventory)
+  * [State Persistence and Data Handling](#state-persistence-and-data-handling)
+  * [Audio and Media Handling](#audio-and-media-handling)
+  * [Interface Behavior and Responsiveness](#interface-behavior-and-responsiveness)
+  * [Local Development and Deployment](#local-development-and-deployment)
+  * [Testing and Verification Notes](#testing-and-verification-notes)
+  * [Maintenance Checklist](#maintenance-checklist)
+  * [Appendix A: File Map](#appendix-a-file-map)
+<!-- TOC -->
+
 ## Purpose and Scope
 This directory holds the production-facing, fully static build of Uploaded Life, an interactive vignette about compulsory identity verification and its downstream risks. The site runs entirely in client browsers, so every asset necessary for rendering narrative content, music, and stateful gameplay resides here. There are no server-side components, build pipelines, or external dependencies beyond the documented embeds, making this folder the authoritative source of truth for distribution.
 
