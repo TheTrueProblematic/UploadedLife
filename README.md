@@ -56,7 +56,7 @@ Each view is either generated entirely by JavaScript (scenarios, identity theft,
 - Video and additional audio assets live under `Resources/`, allowing future enhancements (e.g., intro animations) without changing the build process.
 
 ## Interface Behavior and Responsiveness
-- The entire experience assumes a widescreen viewport. The parent window measures the width-to-height ratio; if it drops below 1.5, the app root swaps to the inline mobile template, which displays instructions to rotate or resize before resuming play.
+- The experience now adapts to orientation: landscape viewports (width ≥ height, including perfect squares) keep the widescreen layout, while portrait viewports switch to a mobile-friendly stack with a compact HUD summary bar.
 - `.page-shell` provides consistent padding and vertical rhythm, while `.hud-grid` uses flexbox to keep stat panels legible on large or small screens.
 - Modal dialogs are injected on demand with an overlay lock that removes scrolling, matching native focus management.
 - Footer links (`TrueProblematic © YEAR`) appear on the intro, mobile, learn-more, and fail-state screens, reinforcing the branding even when the HUD is hidden.
@@ -67,7 +67,7 @@ Each view is either generated entirely by JavaScript (scenarios, identity theft,
    - `python3 -m http.server 4173`
    - `npx serve .`
 3. Visit `http://localhost:4173/` (or equivalent). Loading `index.html` via direct file URLs is discouraged because some browsers block audio unlock logic in `file://` contexts.
-4. To test on smaller screens, resize the browser until the mobile notice appears, then press “I have a wider screen now” to rerun the viewport heuristic without refreshing.
+4. To test portrait mode, resize the browser so the viewport is taller than wide; the layout will automatically swap to the mobile stack. Rotate or widen the viewport to snap back to the desktop layout without refreshing.
 Deployment to hosting providers consists of uploading this folder and pointing the root to `index.html`. No preprocessing is required.
 
 ## Testing and Verification Notes
@@ -77,7 +77,8 @@ Deployment to hosting providers consists of uploading this folder and pointing t
 - **Identity Theft Arc**: Force the breach by collecting multiple ID-requiring services and advancing beyond month 10. Confirm that money drops to negative balances and that the three-step narrative concludes on `learnmore`.
 - **No Happiness State**: Repeatedly choose options that harm happiness to confirm that `nohappiness.html` becomes reachable and that restarting clears modifiers.
 - **Audio Unlock**: Load the site with autoplay disabled, click once, and note that background music begins without stacking loops.
-- **Mobile Gate**: Narrow the viewport, observe the inline mobile template, then widen and use the provided button to restore the active view.
+- **Mobile Layout**: Resize to portrait to verify the mobile HUD summary appears, the primary money/happiness block is hidden, interior cards scroll instead of overflowing, and gameplay continues; rotate back to return to the desktop layout without reloads.
+- **Desktop Visual Pass**: Run a quick widescreen pass (≥ aspect 1:1) to confirm HUD blocks, scenario padding, and the learn-more iframe spacing remain correct after changes.
 
 ## Maintenance Checklist
 - When adding a new scenario, register it in `buildScenarioLibrary` and decide whether it belongs to the `core` or `random` pool—no standalone HTML stub is necessary.

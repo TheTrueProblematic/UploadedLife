@@ -136,6 +136,7 @@
             this.activeTarget = 'Pages/main.html';
             this.pendingGameTarget = 'Pages/main.html';
             this.viewMode = 'game';
+            this.viewportMode = this.detectViewportMode(this.rootWindow || root || window);
             this.modal = {
                 overlay: null,
                 card: null,
@@ -515,6 +516,8 @@
             this.frameRefs.indexWindow = win;
             const doc = win.document;
             this.getViewRoot(doc);
+            this.viewportMode = this.detectViewportMode(win);
+            this.applyViewportMode(doc);
             const initialSrc = this.normalizeTarget(this.frameRefs.lastGameSrc || 'Pages/main.html');
             this.frameRefs.lastGameSrc = initialSrc;
             this.pendingGameTarget = initialSrc;
@@ -523,7 +526,7 @@
             const resizeHandler = () => this.evaluateViewport();
             win.addEventListener('resize', resizeHandler);
             this.renderVirtualPage(initialSrc);
-            this.evaluateViewport();
+            this.evaluateViewport(true);
         }
 
         renderVirtualPage(target) {
@@ -532,6 +535,7 @@
             const descriptor = this.describeTarget(target);
             if (!doc?.body) return;
 
+            this.applyViewportMode(doc);
             this.activeTarget = descriptor.normalized;
             if (descriptor.page !== 'mobile') {
                 this.pendingGameTarget = descriptor.normalized;
@@ -771,7 +775,12 @@
         initMobile(win) {
             const doc = win.document;
             const scope = this.getViewRoot(doc);
-            scope?.querySelector('[data-action="resize-check"]')?.addEventListener('click', () => this.evaluateViewport(true));
+            scope?.querySelector('[data-action="resize-check"]')?.addEventListener('click', () => {
+                this.evaluateViewport(true);
+                const target = this.pendingGameTarget || this.frameRefs.lastGameSrc || 'Pages/main.html';
+                this.setAudioThemeByTarget(target, {force: true});
+                this.renderVirtualPage(target);
+            });
         }
 
         renderScenario(win, def, scenarioId) {
@@ -788,6 +797,9 @@
             title.className = 'hero-title';
             title.textContent = 'Uploaded Life';
             container.appendChild(title);
+
+            const summary = this.createMobileHudSummary(doc);
+            container.appendChild(summary);
 
             const hud = this.createHud(doc);
             container.appendChild(hud);
@@ -823,7 +835,27 @@
 
             const host = this.clearView(doc);
             host?.appendChild(container);
-            this.refreshHud(hud);
+            this.refreshHud(hud, [summary]);
+        }
+
+        createMobileHudSummary(doc) {
+            const wrap = doc.createElement('div');
+            wrap.className = 'mobile-hud-summary';
+            wrap.innerHTML = `
+        <div class="summary-tile">
+          <p class="summary-label">Money</p>
+          <p class="summary-value" data-field="money"></p>
+        </div>
+        <div class="summary-tile">
+          <p class="summary-label">Happiness</p>
+          <div class="summary-meter"><div class="summary-meter-fill" data-field="happiness-bar"></div></div>
+          <p class="summary-value" data-field="happiness"></p>
+        </div>
+        <div class="summary-tile">
+          <p class="summary-label">ID Checks</p>
+          <p class="summary-value" data-field="id-count"></p>
+        </div>`;
+            return wrap;
         }
 
         createHud(doc) {
@@ -852,13 +884,30 @@
             return wrap;
         }
 
-        refreshHud(rootEl) {
-            rootEl.querySelector('[data-field="money"]').textContent = currency.format(this.state.money);
-            rootEl.querySelector('[data-field="happiness"]').textContent = `${Math.round(this.state.happiness)}%`;
-            rootEl.querySelector('[data-field="happiness-bar"]').style.width = `${this.state.happiness}%`;
-            this.populateEffects(rootEl.querySelector('[data-field="economy-list"]'), this.state.economyEffects, true);
-            this.populateEffects(rootEl.querySelector('[data-field="happiness-list"]'), this.state.happinessEffects, false);
-            this.populateIdBadges(rootEl.querySelector('[data-field="id-list"]'));
+        refreshHud(rootEl, extraScopes = []) {
+            const scopes = [rootEl, ...extraScopes].filter(Boolean);
+            scopes.forEach((scope) => {
+                const money = scope.querySelector('[data-field="money"]');
+                if (money) {
+                    money.textContent = currency.format(this.state.money);
+                }
+                const happiness = scope.querySelector('[data-field="happiness"]');
+                if (happiness) {
+                    happiness.textContent = `${Math.round(this.state.happiness)}%`;
+                }
+                const happinessBar = scope.querySelector('[data-field="happiness-bar"]');
+                if (happinessBar) {
+                    happinessBar.style.width = `${this.state.happiness}%`;
+                }
+                const idCount = scope.querySelector('[data-field="id-count"]');
+                if (idCount) {
+                    const total = this.state.idList.length;
+                    idCount.textContent = total ? `${total} service${total === 1 ? '' : 's'}` : 'No services yet';
+                }
+                this.populateEffects(scope.querySelector('[data-field="economy-list"]'), this.state.economyEffects, true);
+                this.populateEffects(scope.querySelector('[data-field="happiness-list"]'), this.state.happinessEffects, false);
+                this.populateIdBadges(scope.querySelector('[data-field="id-list"]'));
+            });
         }
 
         populateEffects(target, list, isMoney) {
@@ -1326,9 +1375,6 @@
                 this.pendingGameTarget = resolved;
             }
             this.setAudioThemeByTarget(resolved);
-            if (this.viewMode === 'mobile' && resolved !== 'Pages/mobile.html') {
-                return;
-            }
             this.renderVirtualPage(resolved);
         }
 
@@ -1345,25 +1391,61 @@
             return `Pages/${trimmed}`;
         }
 
+        detectViewportMode(win) {
+            const target = win || this.frameRefs.indexWindow || this.rootWindow || root || window;
+            const width = Math.max(0, Number(target?.innerWidth) || 0);
+            const height = Math.max(0, Number(target?.innerHeight) || 0);
+            if (height > width && width > 0) {
+                return 'mobile';
+            }
+            return 'desktop';
+        }
+
+        updateViewportUnits(win, doc) {
+            const targetWin = win || this.frameRefs.indexWindow || this.rootWindow || root || window;
+            const targetDoc = doc || this.frameRefs.indexWindow?.document || document;
+            if (!targetDoc?.documentElement?.style?.setProperty) return;
+            const width = Math.max(320, Number(targetWin?.innerWidth) || 0);
+            const height = Math.max(320, Number(targetWin?.innerHeight) || 0);
+            const vw = width / 100;
+            const vh = height / 100;
+            targetDoc.documentElement.style.setProperty('--vw', `${vw}px`);
+            targetDoc.documentElement.style.setProperty('--vh', `${vh}px`);
+            targetDoc.documentElement.style.setProperty('--viewport-height', `${height}px`);
+        }
+
+        applyViewportMode(doc) {
+            const mode = this.viewportMode || 'desktop';
+            const targetDoc = doc || this.frameRefs.indexWindow?.document || document;
+            if (!targetDoc) return;
+            this.updateViewportUnits(this.frameRefs.indexWindow || this.rootWindow || root || window, targetDoc);
+            const html = targetDoc.documentElement;
+            if (html) {
+                html.dataset.viewportMode = mode;
+            }
+            if (targetDoc.body) {
+                targetDoc.body.dataset.viewportMode = mode;
+            }
+            if (this.viewRoot && this.viewRoot.ownerDocument === targetDoc) {
+                this.viewRoot.dataset.viewportMode = mode;
+            }
+        }
+
         evaluateViewport(force = false) {
             if (!this.frameRefs.indexWindow) return;
             const win = this.frameRefs.indexWindow;
-            const ratio = win.innerWidth / Math.max(1, win.innerHeight);
-            const shouldMobile = ratio < 1.5;
-            if (shouldMobile && this.viewMode !== 'mobile') {
-                this.showMobileOverlay();
-            } else if ((!shouldMobile || force) && this.viewMode === 'mobile') {
+            this.updateViewportUnits(win, win.document);
+            const nextMode = this.detectViewportMode(win);
+            const changed = nextMode !== this.viewportMode;
+            if (changed || force) {
+                this.viewportMode = nextMode;
+                this.applyViewportMode(win.document);
+            }
+            if (changed && this.viewMode === 'mobile') {
                 const target = this.pendingGameTarget || this.frameRefs.lastGameSrc || 'Pages/main.html';
                 this.setAudioThemeByTarget(target, {force: true});
                 this.renderVirtualPage(target);
             }
-        }
-
-        showMobileOverlay() {
-            const mobileSrc = 'Pages/mobile.html';
-            this.viewMode = 'mobile';
-            this.setAudioThemeByTarget(mobileSrc);
-            this.renderVirtualPage(mobileSrc);
         }
 
         loadState() {
