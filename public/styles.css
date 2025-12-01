@@ -779,19 +779,11 @@ body[data-viewport-mode="mobile"] .mobile-hud-summary {
 }
 
 body[data-viewport-mode="mobile"] .hud-grid {
-    flex-direction: column;
-    gap: 0.75rem;
-    flex: 0 0 auto;
-    max-height: calc(var(--viewport-height) * 0.32);
-    overflow: auto;
+    display: none;
 }
 
 body[data-viewport-mode="mobile"] .stat-block {
-    width: 100%;
-    min-width: 0;
-    padding: 0.9rem 1rem;
-    max-height: calc(var(--viewport-height) * 0.28);
-    overflow: auto;
+    display: none;
 }
 
 body[data-viewport-mode="mobile"] .stat-block.primary {
@@ -818,6 +810,24 @@ body[data-viewport-mode="mobile"] .scenario-card {
 
 body[data-viewport-mode="mobile"] .scenario-card .choice-grid {
     margin-top: 0.25rem;
+}
+
+body[data-viewport-mode="mobile"] .mobile-detail-board {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+}
+
+body[data-viewport-mode="mobile"] .mobile-detail-block {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 0.65rem;
+    padding: 0.85rem 0.95rem;
+}
+
+body[data-viewport-mode="mobile"] .mobile-detail-block .summary-label {
+    margin-bottom: 0.35rem;
+    color: var(--muted);
 }
 
 body[data-viewport-mode="mobile"] .choice-grid {

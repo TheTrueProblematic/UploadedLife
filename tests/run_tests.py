@@ -20,6 +20,7 @@ class SiteStructureTests(unittest.TestCase):
     def setUpClass(cls):
         cls.html = INDEX_HTML.read_text(encoding="utf-8")
         cls.scripts = SCRIPTS_JS.read_text(encoding="utf-8")
+        cls.library = json.loads(LIBRARY_JSON.read_text(encoding="utf-8"))
 
     def test_app_root_placeholder_exists(self):
         self.assertRegex(self.html, r'id="app-root"', msg="Expected #app-root container inside index.html")
@@ -63,6 +64,58 @@ class SiteStructureTests(unittest.TestCase):
         json_data = json.loads(LIBRARY_JSON.read_text(encoding="utf-8"))
         embedded_data = json.loads(payload)
         self.assertEqual(embedded_data, json_data, msg="library-embedded.js is out of sync with library.json (run node scripts/sync-library.js)")
+
+    def test_scenario_rows_have_text(self):
+        def has_text(value):
+            return isinstance(value, str) and value.strip()
+
+        library = self.library
+        scenarios = library.get("scenarios", [])
+        self.assertTrue(scenarios, "Scenario list missing from library.json")
+        good_events = {row["id"]: row for row in library.get("goodEvents", [])}
+        bad_events = {row["id"]: row for row in library.get("badEvents", [])}
+        hobby_offers = {row["id"]: row for row in library.get("hobbyOffers", [])}
+
+        for row in scenarios:
+            cfg = row.get("config", {})
+            scenario_id = row.get("id")
+            scenario_type = row.get("type")
+            source_id = cfg.get("dataId") or scenario_id
+            if scenario_type in {
+                "jobSelection",
+                "event",
+                "static",
+                "hobbyStarter",
+                "promotionOffer",
+                "relationshipInvite",
+                "relationshipBreakup",
+                "pendingRelationship",
+                "hobbyVerification",
+                "datingApp",
+            }:
+                self.assertTrue(has_text(row.get("text")), f"Scenario {scenario_id} missing base text.")
+            elif scenario_type == "goodEvent":
+                entry = good_events.get(source_id)
+                self.assertIsNotNone(entry, f"goodEvent scenario {scenario_id} references missing dataset id {source_id}.")
+                self.assertTrue(has_text(entry.get("text") or row.get("text")), f"goodEvent scenario {scenario_id} missing text.")
+            elif scenario_type == "badEvent":
+                entry = bad_events.get(source_id)
+                self.assertIsNotNone(entry, f"badEvent scenario {scenario_id} references missing dataset id {source_id}.")
+                self.assertTrue(has_text(entry.get("text") or row.get("text")), f"badEvent scenario {scenario_id} missing text.")
+            elif scenario_type == "hobbyOffer":
+                entry = hobby_offers.get(source_id)
+                self.assertIsNotNone(entry, f"hobbyOffer scenario {scenario_id} references missing dataset id {source_id}.")
+                self.assertTrue(has_text(entry.get("text") or row.get("text")), f"hobbyOffer scenario {scenario_id} missing text.")
+            elif scenario_type == "relationshipOutcome":
+                self.assertTrue(
+                    has_text(cfg.get("successTextApp"))
+                    or has_text(cfg.get("successTextInperson"))
+                    or has_text(cfg.get("failureText"))
+                    or has_text(row.get("text")),
+                    f"relationshipOutcome scenario {scenario_id} missing outcome text.",
+                )
+            else:
+                self.assertTrue(has_text(row.get("text")), f"Scenario {scenario_id} missing narrative text.")
 
     def test_embedded_library_script_loads_before_engine(self):
         embed_index = self.html.find("Resources/library-embedded.js")
@@ -135,6 +188,42 @@ class SiteStructureTests(unittest.TestCase):
                 0,
                 msg=f"node --check failed for {target}: {result.stderr.strip()}",
             )
+
+    def test_hud_state_regression(self):
+        script = PROJECT_ROOT / "tests" / "hud-state.test.js"
+        result = subprocess.run(["node", str(script)], capture_output=True, text=True)
+        self.assertEqual(
+            result.returncode,
+            0,
+            msg=f"hud-state.test.js failed: {result.stderr.strip() or result.stdout.strip()}",
+        )
+
+    def test_hud_render_regression(self):
+        script = PROJECT_ROOT / "tests" / "hud-render.test.js"
+        result = subprocess.run(["node", str(script)], capture_output=True, text=True)
+        self.assertEqual(
+            result.returncode,
+            0,
+            msg=f"hud-render.test.js failed: {result.stderr.strip() or result.stdout.strip()}",
+        )
+
+    def test_hud_mobile_flow(self):
+        script = PROJECT_ROOT / "tests" / "hud-mobile-flow.test.js"
+        result = subprocess.run(["node", str(script)], capture_output=True, text=True)
+        self.assertEqual(
+            result.returncode,
+            0,
+            msg=f"hud-mobile-flow.test.js failed: {result.stderr.strip() or result.stdout.strip()}",
+        )
+
+    def test_hud_heartbeat(self):
+        script = PROJECT_ROOT / "tests" / "hud-heartbeat.test.js"
+        result = subprocess.run(["node", str(script)], capture_output=True, text=True)
+        self.assertEqual(
+            result.returncode,
+            0,
+            msg=f"hud-heartbeat.test.js failed: {result.stderr.strip() or result.stdout.strip()}",
+        )
 
 
 if __name__ == "__main__":

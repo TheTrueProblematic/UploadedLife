@@ -117,6 +117,8 @@
             this.environment = environment;
             this.localStorageKey = 'uploaded-life-state-v1';
             this.state = this.loadState();
+            this.normalizeStateCollections();
+            this.hudHeartbeat = {timer: null, callback: null, scopes: []};
             const providedLibrary = scenarioLibrary || {};
             this.scenarios = providedLibrary;
             this.scenariosReady = Object.keys(providedLibrary).length > 0;
@@ -476,6 +478,7 @@
         }
 
         clearView(doc = document) {
+            this.stopHudHeartbeat();
             const container = this.getViewRoot(doc);
             if (container) {
                 container.innerHTML = '';
@@ -789,6 +792,10 @@
 
             const doc = win.document;
             const view = def.build(this.state, this, utils);
+            const scenarioText = typeof view.text === 'string' && view.text.trim() ? view.text : '';
+            if (!scenarioText) {
+                console.warn(`Uploaded Life: scenario ${scenarioId} returned empty text.`);
+            }
             const container = doc.createElement('div');
             container.className = 'page-shell';
 
@@ -797,17 +804,24 @@
             title.textContent = 'Uploaded Life';
             container.appendChild(title);
 
-            const summary = this.createMobileHudSummary(doc);
+            const summary = this.createMobileHudSummary(doc, this.state);
             container.appendChild(summary);
 
-            const hud = this.createHud(doc);
-            container.appendChild(hud);
+            const isMobile = (doc.body?.dataset?.viewportMode || '').toLowerCase() === 'mobile';
+            let hud = null;
+            if (isMobile) {
+                const mobileBoard = this.createMobileDetailBoard(doc, this.state);
+                container.appendChild(mobileBoard);
+            } else {
+                hud = this.createHud(doc, this.state);
+                container.appendChild(hud);
+            }
 
             const card = doc.createElement('div');
             card.className = 'scenario-card';
             const text = doc.createElement('p');
             text.className = 'scenario-text';
-            text.textContent = view.text;
+            text.textContent = scenarioText || 'This scenario failed to load content. Please continue to keep playing.';
             card.appendChild(text);
 
             if (view.details) {
@@ -834,78 +848,205 @@
 
             const host = this.clearView(doc);
             host?.appendChild(container);
-            this.refreshHud(hud, [summary]);
+            this.refreshHud(hud || container, [summary, container]);
+            this.startHudHeartbeat(hud || container, [summary, container]);
         }
 
-        createMobileHudSummary(doc) {
+        normalizeStateCollections() {
+            const ensureArray = (value, fallback = []) => (Array.isArray(value) ? value.filter((item) => item != null) : fallback.slice());
+            const dedupeById = (list) => {
+                const seen = new Set();
+                return list.filter((item) => {
+                    if (!item) return false;
+                    const key = item.id || item.name;
+                    if (!key) return true;
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
+            };
+
+            let economy = ensureArray(this.state.economyEffects, []);
+            const hasBills = economy.some((entry) => entry && (entry.id === 'bills' || entry.name === 'Bills'));
+            if (!hasBills) {
+                economy.unshift({id: 'bills', name: 'Bills', amount: -1000});
+            }
+            this.state.economyEffects = dedupeById(economy);
+
+            const happiness = ensureArray(this.state.happinessEffects, []);
+            this.state.happinessEffects = dedupeById(happiness);
+
+            const ids = ensureArray(this.state.idList, []);
+            this.state.idList = Array.from(new Set(ids.filter(Boolean)));
+
+            const hobbies = ensureArray(this.state.hobbies, []);
+            this.state.hobbies = dedupeById(hobbies);
+
+            this.captureHudSnapshot();
+        }
+
+        captureHudSnapshot() {
+            const cloneList = (list) => JSON.parse(JSON.stringify(list || []));
+            const ensureBills = (list) => {
+                if (!Array.isArray(list)) return [{id: 'bills', name: 'Bills', amount: -1000}];
+                if (!list.some((entry) => entry && (entry.id === 'bills' || entry.name === 'Bills'))) {
+                    return [{id: 'bills', name: 'Bills', amount: -1000}, ...list];
+                }
+                return list;
+            };
+            const economy = ensureBills(cloneList(this.state.economyEffects));
+            const happiness = cloneList(this.state.happinessEffects);
+            const idList = Array.from(new Set((this.state.idList || []).filter(Boolean)));
+            this.state.lastHud = {economy, happiness, idList};
+        }
+
+        createMobileHudSummary(doc, state) {
+            const moneyValue = currency.format(state?.money ?? this.state.money);
+            const happinessValue = `${Math.round(state?.happiness ?? this.state.happiness)}%`;
             const wrap = doc.createElement('div');
             wrap.className = 'mobile-hud-summary';
             wrap.innerHTML = `
         <div class="summary-tile">
           <p class="summary-label">Money</p>
-          <p class="summary-value" data-field="money"></p>
+          <p class="summary-value" data-field="money">${moneyValue}</p>
         </div>
         <div class="summary-tile">
           <p class="summary-label">Happiness</p>
-          <div class="summary-meter"><div class="summary-meter-fill" data-field="happiness-bar"></div></div>
-          <p class="summary-value" data-field="happiness"></p>
-        </div>
-        <div class="summary-tile">
-          <p class="summary-label">ID Checks</p>
-          <p class="summary-value" data-field="id-count"></p>
+          <div class="summary-meter"><div class="summary-meter-fill" data-field="happiness-bar" style="width:${state?.happiness ?? this.state.happiness}%"></div></div>
+          <p class="summary-value" data-field="happiness">${happinessValue}</p>
         </div>`;
             return wrap;
         }
 
-        createHud(doc) {
+        createHud(doc, state) {
             const wrap = doc.createElement('div');
             wrap.className = 'hud-grid';
+            const currentMoney = currency.format(state?.money ?? this.state.money);
+            const currentHappy = Math.round(state?.happiness ?? this.state.happiness);
+            const economyList = doc.createElement('ul');
+            economyList.className = 'effect-list';
+            economyList.dataset.field = 'economy-list';
+            this.populateEffects(economyList, state?.economyEffects || this.state.economyEffects, true);
+
+            const happinessList = doc.createElement('ul');
+            happinessList.className = 'effect-list';
+            happinessList.dataset.field = 'happiness-list';
+            this.populateEffects(happinessList, state?.happinessEffects || this.state.happinessEffects, false);
+
+            const idBadges = doc.createElement('div');
+            idBadges.className = 'id-badges';
+            idBadges.dataset.field = 'id-list';
+            this.populateIdBadges(idBadges);
+
             wrap.innerHTML = `
         <div class="stat-block primary">
           <p class="stat-heading">Alex</p>
-          <p class="stat-value" data-field="money">${currency.format(this.state.money)}</p>
-          <div class="meter"><div class="meter-fill" data-field="happiness-bar" style="width:${this.state.happiness}%"></div></div>
+          <p class="stat-value" data-field="money">${currentMoney}</p>
+          <div class="meter"><div class="meter-fill" data-field="happiness-bar" style="width:${currentHappy}%"></div></div>
           <p class="stat-heading" style="margin-top:0.5rem;">Happiness</p>
-          <p class="stat-value" data-field="happiness">${Math.round(this.state.happiness)}%</p>
+          <p class="stat-value" data-field="happiness">${currentHappy}%</p>
         </div>
         <div class="stat-block">
           <p class="stat-heading">Economy</p>
-          <ul class="effect-list" data-field="economy-list"></ul>
         </div>
         <div class="stat-block">
           <p class="stat-heading">Hobbies & Mood</p>
-          <ul class="effect-list" data-field="happiness-list"></ul>
         </div>
         <div class="stat-block">
           <p class="stat-heading">ID Checks</p>
-          <div class="id-badges" data-field="id-list"></div>
         </div>`;
+            const blocks = wrap.querySelectorAll('.stat-block');
+            blocks[1]?.appendChild(economyList);
+            blocks[2]?.appendChild(happinessList);
+            blocks[3]?.appendChild(idBadges);
+            return wrap;
+        }
+
+        createMobileDetailBoard(doc, state) {
+            const wrap = doc.createElement('div');
+            wrap.className = 'mobile-detail-board';
+
+            const econ = doc.createElement('div');
+            econ.className = 'mobile-detail-block';
+            econ.innerHTML = '<p class="summary-label">Economy</p>';
+            const econList = doc.createElement('ul');
+            econList.className = 'effect-list';
+            econList.dataset.field = 'economy-list';
+            this.populateEffects(econList, state?.economyEffects || this.state.economyEffects, true);
+            econ.appendChild(econList);
+
+            const happy = doc.createElement('div');
+            happy.className = 'mobile-detail-block';
+            happy.innerHTML = '<p class="summary-label">Hobbies & Mood</p>';
+            const happyList = doc.createElement('ul');
+            happyList.className = 'effect-list';
+            happyList.dataset.field = 'happiness-list';
+            this.populateEffects(happyList, state?.happinessEffects || this.state.happinessEffects, false);
+            happy.appendChild(happyList);
+
+            const ids = doc.createElement('div');
+            ids.className = 'mobile-detail-block';
+            ids.innerHTML = '<p class="summary-label">ID Checks</p>';
+            const idList = doc.createElement('div');
+            idList.className = 'id-badges';
+            idList.dataset.field = 'id-list';
+            this.populateIdBadges(idList);
+            ids.appendChild(idList);
+
+            wrap.appendChild(econ);
+            wrap.appendChild(happy);
+            wrap.appendChild(ids);
             return wrap;
         }
 
         refreshHud(rootEl, extraScopes = []) {
-            const scopes = [rootEl, ...extraScopes].filter(Boolean);
-            scopes.forEach((scope) => {
-                const money = scope.querySelector('[data-field="money"]');
-                if (money) {
-                    money.textContent = currency.format(this.state.money);
-                }
-                const happiness = scope.querySelector('[data-field="happiness"]');
-                if (happiness) {
-                    happiness.textContent = `${Math.round(this.state.happiness)}%`;
-                }
-                const happinessBar = scope.querySelector('[data-field="happiness-bar"]');
-                if (happinessBar) {
-                    happinessBar.style.width = `${this.state.happiness}%`;
-                }
-                const idCount = scope.querySelector('[data-field="id-count"]');
-                if (idCount) {
-                    const total = this.state.idList.length;
-                    idCount.textContent = total ? `${total} service${total === 1 ? '' : 's'}` : 'No services yet';
-                }
-                this.populateEffects(scope.querySelector('[data-field="economy-list"]'), this.state.economyEffects, true);
-                this.populateEffects(scope.querySelector('[data-field="happiness-list"]'), this.state.happinessEffects, false);
-                this.populateIdBadges(scope.querySelector('[data-field="id-list"]'));
+            this.normalizeStateCollections();
+            const economyEffects = this.state.economyEffects;
+            const happinessEffects = this.state.happinessEffects;
+            const idList = this.state.idList;
+            const fallbackEconomy = this.state.lastHud?.economy || [{id: 'bills', name: 'Bills', amount: -1000}];
+            const fallbackHappiness = this.state.lastHud?.happiness || [];
+            const fallbackIds = this.state.lastHud?.idList || [];
+
+            const scopeSet = new Set(
+                [rootEl, ...extraScopes, this.viewRoot, this.frameRefs?.currentFrameWindow?.document, this.frameRefs?.indexWindow?.document, document].filter(Boolean),
+            );
+            const scopes = Array.from(scopeSet);
+
+            const collect = (selector) => {
+                const nodes = new Set();
+                scopes.forEach((scope) => {
+                    if (scope?.querySelectorAll) {
+                        scope.querySelectorAll(selector).forEach((el) => nodes.add(el));
+                    } else if (scope?.querySelector) {
+                        const el = scope.querySelector(selector);
+                        if (el) nodes.add(el);
+                    }
+                });
+                return Array.from(nodes);
+            };
+
+            collect('[data-field="money"]').forEach((node) => {
+                node.textContent = currency.format(this.state.money);
+            });
+            collect('[data-field="happiness"]').forEach((node) => {
+                node.textContent = `${Math.round(this.state.happiness)}%`;
+            });
+            collect('[data-field="happiness-bar"]').forEach((node) => {
+                node.style.width = `${this.state.happiness}%`;
+            });
+            collect('[data-field="id-count"]').forEach((node) => {
+                const total = idList.length;
+                node.textContent = total ? `${total} service${total === 1 ? '' : 's'}` : 'No services yet';
+            });
+            collect('[data-field="economy-list"]').forEach((node) => {
+                this.populateEffects(node, economyEffects.length ? economyEffects : fallbackEconomy, true);
+            });
+            collect('[data-field="happiness-list"]').forEach((node) => {
+                this.populateEffects(node, happinessEffects.length ? happinessEffects : fallbackHappiness, false);
+            });
+            collect('[data-field="id-list"]').forEach((node) => {
+                this.populateIdBadges(node, fallbackIds);
             });
         }
 
@@ -935,18 +1076,19 @@
             });
         }
 
-        populateIdBadges(target) {
+        populateIdBadges(target, fallbackIds) {
             if (!target) return;
             const doc = target.ownerDocument || document;
             target.innerHTML = '';
-            if (!this.state.idList.length) {
+            const services = this.state.idList.length ? this.state.idList : Array.isArray(fallbackIds) ? fallbackIds : [];
+            if (!services.length) {
                 const badge = doc.createElement('span');
                 badge.className = 'effect-empty';
                 badge.textContent = 'No services yet';
                 target.appendChild(badge);
                 return;
             }
-            this.state.idList.forEach((service) => {
+            services.forEach((service) => {
                 const badge = doc.createElement('span');
                 badge.className = 'id-pill';
                 badge.textContent = service;
@@ -1018,9 +1160,12 @@
             const next = choice.next || '';
             const idService = choice.idService || '';
             window.progressGame(next, econ.name || '', econ.amount || 0, happy.name || '', happy.amount || 0, idService);
+            this.captureHudSnapshot();
+            this.forceHudRefresh();
         }
 
         processDecision(nextPage, econName, econAmount, happinessName, happinessAmount, idService) {
+            this.normalizeStateCollections();
             const meta = this.pendingChoiceMeta || {};
             const immediate = this.pendingImmediate || {};
             this.pendingChoiceMeta = null;
@@ -1115,6 +1260,7 @@
         }
 
         advanceTurn() {
+            this.normalizeStateCollections();
             this.state.turn = (this.state.turn || 0) + 1;
             const moneyDelta = (this.state.economyEffects || []).reduce((sum, item) => sum + Number(item.amount || 0), 0);
             this.state.money += moneyDelta;
@@ -1124,6 +1270,7 @@
                 money: this.state.money,
                 happiness: this.state.happiness,
             };
+            this.captureHudSnapshot();
         }
 
         addEconomyEffect(name, amount, meta = {}) {
@@ -1138,6 +1285,7 @@
             if (meta.markJob) {
                 this.state.jobEffectId = effect.id;
             }
+            this.captureHudSnapshot();
         }
 
         addHappinessEffect(name, amount, meta = {}) {
@@ -1149,6 +1297,7 @@
                 meta,
             };
             this.state.happinessEffects.push(effect);
+            this.captureHudSnapshot();
         }
 
         addHobby(config) {
@@ -1179,6 +1328,7 @@
                 requiresId: !!config.requiresId,
                 idSubmitted: !!config.idSubmitted,
             });
+            this.captureHudSnapshot();
         }
 
         removeHobby(identifier) {
@@ -1187,6 +1337,7 @@
             this.state.hobbies = this.state.hobbies.filter((item) => item !== hobby);
             this.state.economyEffects = (this.state.economyEffects || []).filter((effect) => effect.id !== hobby.econEffectId);
             this.state.happinessEffects = (this.state.happinessEffects || []).filter((effect) => effect.id !== hobby.happinessEffectId);
+            this.captureHudSnapshot();
         }
 
         verifyHobby({hobbyId, provider}) {
@@ -1195,6 +1346,39 @@
                 hobby.idSubmitted = true;
                 this.addIdEntry(provider);
             }
+            this.captureHudSnapshot();
+            this.forceHudRefresh();
+        }
+
+        forceHudRefresh() {
+            if (this.hudHeartbeat.callback) {
+                try {
+                    this.hudHeartbeat.callback();
+                } catch (err) {
+                    // ignore
+                }
+            }
+        }
+
+        startHudHeartbeat(hudNode, extraScopes = []) {
+            this.stopHudHeartbeat();
+            const targetHud = hudNode;
+            const scopes = [targetHud, ...extraScopes].filter(Boolean);
+            this.hudHeartbeat.scopes = scopes;
+            this.hudHeartbeat.callback = () => {
+                this.refreshHud(targetHud, extraScopes);
+            };
+            const timer = setInterval(this.hudHeartbeat.callback, 500);
+            this.hudHeartbeat.timer = timer;
+        }
+
+        stopHudHeartbeat() {
+            if (this.hudHeartbeat.timer) {
+                clearInterval(this.hudHeartbeat.timer);
+            }
+            this.hudHeartbeat.timer = null;
+            this.hudHeartbeat.callback = null;
+            this.hudHeartbeat.scopes = [];
         }
 
         applyRelationship(config) {
@@ -1226,6 +1410,8 @@
             this.state.economyEffects = (this.state.economyEffects || []).filter((effect) => effect.id !== this.state.relationship.econEffectId);
             this.state.happinessEffects = (this.state.happinessEffects || []).filter((effect) => effect.id !== this.state.relationship.happinessEffectId);
             this.state.relationship = null;
+            this.captureHudSnapshot();
+            this.forceHudRefresh();
         }
 
         addIdEntry(service) {
@@ -1233,6 +1419,8 @@
             if (!this.state.idList.includes(service)) {
                 this.state.idList.push(service);
             }
+            this.captureHudSnapshot();
+            this.forceHudRefresh();
         }
 
         shouldTriggerIdentityTheft() {
@@ -1339,6 +1527,7 @@
             shell.appendChild(this.buildFooter(doc));
             const host = this.clearView(doc);
             host?.appendChild(shell);
+            this.stopHudHeartbeat();
         }
 
         startNewRun({viaIntro} = {}) {
@@ -1477,10 +1666,10 @@
                 const raw = storage.getItem(this.localStorageKey);
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    parsed.economyEffects = parsed.economyEffects || [{id: 'bills', name: 'Bills', amount: -1000}];
-                    parsed.happinessEffects = parsed.happinessEffects || [];
-                    parsed.idList = parsed.idList || [];
-                    parsed.hobbies = parsed.hobbies || [];
+                    parsed.economyEffects = Array.isArray(parsed.economyEffects) ? parsed.economyEffects : [{id: 'bills', name: 'Bills', amount: -1000}];
+                    parsed.happinessEffects = Array.isArray(parsed.happinessEffects) ? parsed.happinessEffects : [];
+                    parsed.idList = Array.isArray(parsed.idList) ? parsed.idList : [];
+                    parsed.hobbies = Array.isArray(parsed.hobbies) ? parsed.hobbies : [];
                     return parsed;
                 }
             } catch (err) {
@@ -1752,6 +1941,8 @@
         }));
         const hobbyOfferList = Object.values(hobbyOfferMap);
 
+        validateScenarioTextSources(scenarioRows);
+
         const library = {};
         const add = (def) => {
             if (def?.id) {
@@ -1832,6 +2023,74 @@
             }, {});
         }
 
+        function validateScenarioTextSources(rows) {
+            const hasText = (value) => typeof value === 'string' && value.trim().length > 0;
+            rows.forEach((row) => {
+                const cfg = row.config || {};
+                const type = row.type || '';
+                const sourceId = cfg.dataId || row.id;
+                const baseText = hasText(row.text);
+                switch (type) {
+                    case 'jobSelection':
+                    case 'event':
+                    case 'static':
+                    case 'hobbyStarter':
+                    case 'promotionOffer':
+                    case 'relationshipInvite':
+                    case 'relationshipBreakup':
+                    case 'pendingRelationship':
+                    case 'hobbyVerification':
+                    case 'datingApp':
+                        if (!baseText) {
+                            throw new Error(`Scenario ${row.id} missing base text.`);
+                        }
+                        break;
+                    case 'goodEvent': {
+                        const entry = goodEventMap[sourceId];
+                        if (!entry) {
+                            throw new Error(`Scenario ${row.id} references missing goodEvents entry "${sourceId}".`);
+                        }
+                        if (!hasText(entry.text || row.text)) {
+                            throw new Error(`Scenario ${row.id} missing text from goodEvents.`);
+                        }
+                        break;
+                    }
+                    case 'badEvent': {
+                        const entry = badEventMap[sourceId];
+                        if (!entry) {
+                            throw new Error(`Scenario ${row.id} references missing badEvents entry "${sourceId}".`);
+                        }
+                        if (!hasText(entry.text || row.text)) {
+                            throw new Error(`Scenario ${row.id} missing text from badEvents.`);
+                        }
+                        break;
+                    }
+                    case 'hobbyOffer': {
+                        const entry = hobbyOfferMap[sourceId];
+                        if (!entry) {
+                            throw new Error(`Scenario ${row.id} references missing hobbyOffers entry "${sourceId}".`);
+                        }
+                        if (!hasText(entry.text || row.text)) {
+                            throw new Error(`Scenario ${row.id} missing text from hobbyOffers.`);
+                        }
+                        break;
+                    }
+                    case 'relationshipOutcome': {
+                        const hasOutcomeText = hasText(cfg.successTextApp) || hasText(cfg.successTextInperson) || hasText(cfg.failureText) || baseText;
+                        if (!hasOutcomeText) {
+                            throw new Error(`Scenario ${row.id} missing relationship outcome text.`);
+                        }
+                        break;
+                    }
+                    default:
+                        if (!baseText) {
+                            throw new Error(`Scenario ${row.id} missing narrative text.`);
+                        }
+                        break;
+                }
+            });
+        }
+
         function createScenarioDefinition(row, config) {
             const type = (row.type || '').trim();
             let definition = null;
@@ -1903,7 +2162,7 @@
                                     happinessRange: entry.happiness,
                                     hobby: {
                                         hobbyId: entry.id,
-                                        costLabel: entry.text || entry.provider || entry.id,
+                                        costLabel: entry.provider ? `${entry.provider} membership` : entry.id,
                                         happyLabel: entry.provider || entry.id,
                                         provider: entry.provider || entry.id,
                                         requiresId: entry.requiresId,
