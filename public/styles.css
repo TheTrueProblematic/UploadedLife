@@ -550,6 +550,118 @@ body.modal-open .page-shell {
     width: min(900px, 100%);
 }
 
+.identity-shell {
+    position: relative;
+    background:
+        radial-gradient(circle at 20% 18%, rgba(255, 77, 77, 0.12), transparent 35%),
+        radial-gradient(circle at 78% 8%, rgba(255, 77, 77, 0.14), transparent 32%),
+        linear-gradient(135deg, #0a0000 0%, #050505 52%, #0a0000 100%);
+    overflow: hidden;
+}
+
+.identity-shell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(180deg, rgba(255, 77, 77, 0.07), rgba(255, 77, 77, 0.07) 1px, transparent 3px, transparent 6px);
+    mix-blend-mode: screen;
+    opacity: 0.7;
+    pointer-events: none;
+    animation: identity-scan 8s linear infinite;
+}
+
+.identity-shell > * {
+    position: relative;
+    z-index: 1;
+}
+
+.identity-warning {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    align-items: center;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.identity-tag {
+    margin: 0;
+    padding: 0.35rem 0.85rem;
+    border: 1px solid rgba(255, 77, 77, 0.5);
+    color: var(--danger);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-size: clamp(0.85rem, 1.4vw, 1rem);
+    background: rgba(255, 77, 77, 0.08);
+    box-shadow: 0 0 18px rgba(255, 0, 0, 0.15);
+    animation: identity-pulse 1.8s ease-in-out infinite;
+}
+
+.identity-headline {
+    margin: 0;
+    font-size: clamp(2.5rem, 6vw, 4.8rem);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--danger);
+    text-shadow: 0 0 22px rgba(255, 0, 0, 0.5);
+    line-height: 1.05;
+}
+
+.identity-subhead {
+    margin: 0.25rem 0 0;
+    color: #ffb3b3;
+    font-size: clamp(1.05rem, 2vw, 1.5rem);
+    max-width: 960px;
+}
+
+.identity-card {
+    background: rgba(20, 0, 0, 0.8);
+    border-color: rgba(255, 77, 77, 0.45);
+    box-shadow: 0 20px 60px rgba(255, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 77, 77, 0.25);
+    width: min(1100px, 100%);
+    margin: 0 auto;
+}
+
+.identity-text {
+    color: #ffdede;
+    font-size: clamp(1.1rem, 1.7vw, 1.6rem);
+    line-height: 1.65;
+    text-shadow: 0 0 18px rgba(255, 0, 0, 0.2);
+}
+
+.identity-detail {
+    color: #ff9c9c;
+    font-size: clamp(1rem, 1.5vw, 1.3rem);
+}
+
+.identity-detail strong {
+    color: #ffffff;
+}
+
+.identity-button {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #000;
+    font-size: 1.05rem;
+    box-shadow: 0 12px 30px rgba(255, 0, 0, 0.35);
+}
+
+.identity-button:is(:hover, :focus-visible) {
+    background: #ff6d6d;
+    border-color: #ff6d6d;
+    color: #000;
+    box-shadow: 0 14px 34px rgba(255, 0, 0, 0.45);
+}
+
+.identity-shell .site-footer {
+    opacity: 0.8;
+}
+
+.identity-shell .hero-title {
+    display: none;
+}
+
 .credits-card {
     width: min(800px, 100%);
     max-height: 60vh;
@@ -592,6 +704,29 @@ body.modal-open .page-shell {
 
 .credits-section p {
     margin: 0;
+}
+
+@keyframes identity-pulse {
+    0%, 100% {
+        box-shadow: 0 0 18px rgba(255, 0, 0, 0.15);
+        transform: translateY(0);
+    }
+    50% {
+        box-shadow: 0 0 26px rgba(255, 0, 0, 0.35);
+        transform: translateY(-2px);
+    }
+}
+
+@keyframes identity-scan {
+    0% {
+        transform: translateY(-12%);
+    }
+    50% {
+        transform: translateY(12%);
+    }
+    100% {
+        transform: translateY(-12%);
+    }
 }
 
 body[data-viewport-mode="mobile"] {
@@ -769,6 +904,30 @@ body[data-viewport-mode="mobile"] .iframe-doc-shell {
 body[data-viewport-mode="mobile"] .iframe-doc {
     height: 100%;
     transform: none;
+}
+
+body[data-viewport-mode="mobile"] .identity-shell {
+    gap: 0.85rem;
+}
+
+body[data-viewport-mode="mobile"] .identity-headline {
+    font-size: clamp(2rem, 10vw, 3.2rem);
+}
+
+body[data-viewport-mode="mobile"] .identity-subhead {
+    font-size: clamp(1rem, 3.5vw, 1.25rem);
+}
+
+body[data-viewport-mode="mobile"] .identity-text {
+    font-size: clamp(1rem, 3.6vw, 1.3rem);
+}
+
+body[data-viewport-mode="mobile"] .identity-detail {
+    font-size: clamp(0.95rem, 3.4vw, 1.15rem);
+}
+
+body[data-viewport-mode="mobile"] .identity-card {
+    padding: 1rem 0.95rem 1.1rem;
 }
 
 body[data-viewport-mode="mobile"] .site-footer {

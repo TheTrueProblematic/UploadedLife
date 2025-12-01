@@ -1262,16 +1262,42 @@
             const doc = win.document;
             const step = doc.body?.dataset?.identityStep || '1';
             const shell = doc.createElement('div');
-            shell.className = 'page-shell';
-            shell.innerHTML = '<h1 class="hero-title">Uploaded Life</h1>';
+            shell.className = 'page-shell identity-shell';
+
+            const warning = doc.createElement('div');
+            warning.className = 'identity-warning';
+
+            const tag = doc.createElement('p');
+            tag.className = 'identity-tag';
+            const tagLabel = step === '1' ? 'breach detected' : step === '2' ? 'data leak confirmed' : 'system lockout';
+            tag.textContent = tagLabel.toUpperCase();
+            warning.appendChild(tag);
+
+            const headline = doc.createElement('h2');
+            headline.className = 'identity-headline';
+            headline.textContent = step === '3'
+                ? 'Your name isn\'t yours anymore.'
+                : 'Identity stolen. Accounts are burning.';
+            warning.appendChild(headline);
+
+            const subhead = doc.createElement('p');
+            subhead.className = 'identity-subhead';
+            subhead.textContent = step === '1'
+                ? 'Creditors, freezes, alarms, and unknown balances spike red.'
+                : step === '2'
+                    ? 'Your ID photo is spreading faster than you can chase it.'
+                    : 'Everything is flagged. Every door is shut.';
+            warning.appendChild(subhead);
+
+            shell.appendChild(warning);
+
             const card = doc.createElement('div');
-            card.className = 'scenario-card';
+            card.className = 'scenario-card identity-card';
             const text = doc.createElement('p');
-            text.className = 'scenario-text';
+            text.className = 'scenario-text identity-text';
             const details = doc.createElement('p');
-            details.className = 'scenario-text';
+            details.className = 'scenario-text identity-detail';
             let buttonLabel = 'Continue';
-            let target = 'identitytheft2.html';
             const snapshot = this.state.identitySnapshot || {};
             const beforeMoney = typeof snapshot.moneyBefore === 'number'
                 ? snapshot.moneyBefore
@@ -1281,15 +1307,14 @@
                 : (this.state.lastSnapshot?.happiness ?? this.state.happiness);
 
             if (step === '1') {
-                text.textContent = 'You have been the subject of identity theft. Multiple lines of credit now exist in Alex\'s name.';
-                details.textContent = 'Debt collectors are calling, balances look unfamiliar, and everything is frozen.';
+                text.textContent = 'ALERT: Alex\'s identity has been hijacked. New credit lines appeared overnight and they all point to you.';
+                details.textContent = 'Debt collectors are calling, balances look unfamiliar, and every account is snapping shut in sequence.';
             } else if (step === '2') {
                 const service = utils.pick(this.state.idList) || 'A major platform';
                 text.textContent = `${service} just admitted a breach that leaked thousands of ID photos, including Alex\'s.`;
                 details.textContent = 'They mail twelve months of credit monitoring, but the rent is late and interest is smothering everything.';
                 this.state.money = -66000;
                 this.state.happiness = Math.max(0, this.state.happiness);
-                target = 'identitytheft3.html';
             } else {
                 text.textContent = 'Every account is frozen. Happiness flatlined at 1% and the debt is insurmountable.';
                 const afterMoney = this.state.money;
@@ -1298,13 +1323,12 @@
           <strong>Before breach:</strong> ${currency.format(beforeMoney)} &nbsp;|&nbsp; ${Math.round(beforeHappiness)}% happiness.<br>
           <strong>After breach:</strong> ${currency.format(afterMoney)} &nbsp;|&nbsp; 0% happiness.`;
                 buttonLabel = 'Learn More';
-                target = 'learnmore.html';
             }
 
             card.appendChild(text);
             card.appendChild(details);
             const button = doc.createElement('button');
-            button.className = 'cta-button';
+            button.className = 'cta-button identity-button';
             button.textContent = buttonLabel;
             button.addEventListener('click', () => {
                 const destination = step === '3' ? 'learnmore.html' : step === '1' ? 'identitytheft2.html' : 'identitytheft3.html';
