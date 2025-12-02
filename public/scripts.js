@@ -636,39 +636,122 @@
         initMain(win) {
             const doc = win.document;
             const scope = this.getViewRoot(doc);
-            const paragraphs = Array.from(scope?.querySelectorAll('.intro-paragraph') || []);
+            const blurbStage = scope?.querySelector('.intro-blurb-stage');
             const introTitle = scope?.querySelector('.intro-title');
             const footer = scope?.querySelector('.intro-footer');
             const button = scope?.querySelector('[data-action="start"]');
+            const prefersReducedMotion = !!(win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches);
+            const blurbs = [
+                `You are Alex, a 23-year-old starting their first solo apartment lease with $10,000 in savings and boundless optimism. They're about to learn that every small choice, from job offers to app sign-ups, ripples outward in unexpected ways.`,
+                `Time moves in month-long leaps where each decision opens one door while closing another. Beneath every form and "verify your identity" request lurks a question Alex hasn't learned to ask: What am I trading away each time I click "I agree"?`,
+                `Alex is resilient, trusting systems because what other choice is there when you're just trying to live? But in a world where your data is currency and identity is collateral, they're about to discover that the most dangerous deals are the ones that feel inevitable.`,
+            ];
+            const blurbDuration = prefersReducedMotion ? 5000 : 7000;
+            const gapBetween = prefersReducedMotion ? 35 : 45;
 
             introTitle?.setAttribute('data-stage', 'pending');
             footer?.setAttribute('data-stage', 'pending');
-            paragraphs.forEach((para) => para.setAttribute('data-stage', 'pending'));
+            requestAnimationFrame(() => {
+                introTitle?.setAttribute('data-stage', 'active');
+            });
 
+            let ctaShown = false;
+            let sequenceDone = false;
+            let listContainer = null;
+            let failSafeTimer = null;
             const showCTA = () => {
+                if (ctaShown) return;
+                ctaShown = true;
                 introTitle?.setAttribute('data-stage', 'active');
                 footer?.setAttribute('data-stage', 'active');
             };
 
-            const revealParagraph = (index = 0) => {
-                if (!paragraphs.length) {
-                    showCTA();
-                    return;
-                }
-                if (index >= paragraphs.length) {
-                    setTimeout(showCTA, 800);
-                    return;
-                }
-                const para = paragraphs[index];
-                requestAnimationFrame(() => {
-                    para.setAttribute('data-stage', 'active');
+            const addStaticList = () => {
+                if (listContainer) return listContainer;
+                const list = doc.createElement('div');
+                list.className = 'intro-blurb-list';
+                blurbs.forEach((text) => {
+                    const p = doc.createElement('p');
+                    p.textContent = text;
+                    list.appendChild(p);
                 });
-                setTimeout(() => revealParagraph(index + 1), 1200);
+                scope?.querySelector('.intro-sequence')?.appendChild(list);
+                listContainer = list;
+                return listContainer;
             };
 
-            setTimeout(() => revealParagraph(0), 400);
+            const finishSequence = () => {
+                if (sequenceDone) return;
+                sequenceDone = true;
+                if (failSafeTimer) {
+                    clearTimeout(failSafeTimer);
+                    failSafeTimer = null;
+                }
+                const list = addStaticList();
+                if (list) {
+                    list.classList.remove('visible');
+                    // Force reflow before applying visibility so the fade animates.
+                    void list.offsetHeight;
+                    requestAnimationFrame(() => list.classList.add('visible'));
+                }
+                if (blurbStage) {
+                    blurbStage.classList.add('is-complete');
+                    blurbStage.innerHTML = '';
+                }
+                showCTA();
+            };
+
+            const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+            const animateBlurb = (blurbEl, isFinal = false) => {
+                if (prefersReducedMotion || !blurbEl.animate) {
+                    blurbEl.style.opacity = '1';
+                    blurbEl.style.transform = 'none';
+                    blurbEl.style.filter = 'none';
+                    return wait(blurbDuration);
+                }
+                const exitScale = isFinal ? 2.55 : 2.25;
+                const animation = blurbEl.animate(
+                    [
+                        {opacity: 0, transform: 'translateY(52px) scale(0.42)', filter: 'blur(5px)', easing: 'cubic-bezier(0.16, 0.94, 0.32, 1)'},
+                        {opacity: 1, transform: 'translateY(0) scale(0.97)', filter: 'blur(0)', offset: 0.18, easing: 'cubic-bezier(0.16, 0.94, 0.32, 1)'},
+                        {opacity: 1, transform: 'translateY(0) scale(0.97)', filter: 'blur(0)', offset: 0.72},
+                        {opacity: 0, transform: `translateY(-50px) scale(${exitScale})`, filter: 'blur(6px)', offset: 1, easing: 'cubic-bezier(0.55, 0, 1, 0.6)'},
+                    ],
+                    {duration: blurbDuration, easing: 'cubic-bezier(0.6, 0.04, 0.32, 1)', fill: 'forwards'},
+                );
+                return new Promise((resolve) => {
+                    animation.addEventListener('finish', resolve, {once: true});
+                    animation.addEventListener('cancel', resolve, {once: true});
+                });
+            };
+
+            const runSequence = async () => {
+                if (!blurbStage) {
+                    finishSequence();
+                    return;
+                }
+                for (let i = 0; i < blurbs.length; i += 1) {
+                    const blurb = doc.createElement('p');
+                    blurb.className = 'intro-blurb';
+                    blurb.textContent = blurbs[i];
+                    blurbStage.innerHTML = '';
+                    blurbStage.appendChild(blurb);
+                    await animateBlurb(blurb, i === blurbs.length - 1);
+                    if (i < blurbs.length - 1 && gapBetween > 0) {
+                        await wait(gapBetween);
+                    }
+                }
+                finishSequence();
+            };
+
+            const totalDuration = blurbDuration * blurbs.length + 1500;
+            failSafeTimer = setTimeout(finishSequence, totalDuration);
+            setTimeout(() => {
+                runSequence().catch(() => finishSequence());
+            }, 300);
 
             button?.addEventListener('click', () => {
+                finishSequence();
                 this.startNewRun({viaIntro: true});
             });
         }
@@ -879,6 +962,11 @@
             const ids = ensureArray(this.state.idList, []);
             this.state.idList = Array.from(new Set(ids.filter(Boolean)));
 
+            const hasIds = this.state.idList.length > 0;
+            const riskValue = Number(this.state.idRisk);
+            const normalizedRisk = Number.isFinite(riskValue) ? utils.clamp(riskValue, 0, 100) : 0;
+            this.state.idRisk = hasIds ? Math.max(normalizedRisk, 10) : 0;
+
             const hobbies = ensureArray(this.state.hobbies, []);
             this.state.hobbies = dedupeById(hobbies);
 
@@ -918,6 +1006,21 @@
             return wrap;
         }
 
+        createIdRisk(doc) {
+            const wrap = doc.createElement('div');
+            wrap.className = 'id-risk';
+            wrap.innerHTML = `
+        <div class="id-risk-top">
+          <p class="summary-label">Breach Risk</p>
+          <p class="id-risk-value" data-field="id-risk">0%</p>
+        </div>
+        <div class="id-risk-meter" data-field="id-risk-meter" role="meter" aria-valuemin="0" aria-valuemax="99" aria-valuenow="0" aria-label="Risk of an identity breach">
+          <div class="id-risk-meter-fill" data-field="id-risk-bar" style="width:0%"></div>
+        </div>
+        <p class="id-risk-note" data-field="id-risk-note">Risk stays at 0% until you submit an ID.</p>`;
+            return wrap;
+        }
+
         createHud(doc, state) {
             const wrap = doc.createElement('div');
             wrap.className = 'hud-grid';
@@ -937,6 +1040,7 @@
             idBadges.className = 'id-badges';
             idBadges.dataset.field = 'id-list';
             this.populateIdBadges(idBadges);
+            const idRisk = this.createIdRisk(doc);
 
             wrap.innerHTML = `
         <div class="stat-block primary">
@@ -958,6 +1062,7 @@
             const blocks = wrap.querySelectorAll('.stat-block');
             blocks[1]?.appendChild(economyList);
             blocks[2]?.appendChild(happinessList);
+            blocks[3]?.appendChild(idRisk);
             blocks[3]?.appendChild(idBadges);
             return wrap;
         }
@@ -987,16 +1092,23 @@
             const ids = doc.createElement('div');
             ids.className = 'mobile-detail-block';
             ids.innerHTML = '<p class="summary-label">ID Checks</p>';
+            const idRisk = this.createIdRisk(doc);
+            idRisk.classList.add('compact');
             const idList = doc.createElement('div');
             idList.className = 'id-badges';
             idList.dataset.field = 'id-list';
             this.populateIdBadges(idList);
+            ids.appendChild(idRisk);
             ids.appendChild(idList);
 
             wrap.appendChild(econ);
             wrap.appendChild(happy);
             wrap.appendChild(ids);
             return wrap;
+        }
+
+        getIdRiskNote() {
+            return '';
         }
 
         refreshHud(rootEl, extraScopes = []) {
@@ -1034,6 +1146,22 @@
             });
             collect('[data-field="happiness-bar"]').forEach((node) => {
                 node.style.width = `${this.state.happiness}%`;
+            });
+            const riskValue = Math.round(this.state.idRisk || 0);
+            const riskText = `${riskValue}%`;
+            const riskNote = this.getIdRiskNote();
+            collect('[data-field="id-risk"]').forEach((node) => {
+                node.textContent = riskText;
+            });
+            collect('[data-field="id-risk-bar"]').forEach((node) => {
+                node.style.width = riskText;
+                node.setAttribute('aria-valuenow', String(riskValue));
+            });
+            collect('[data-field="id-risk-meter"]').forEach((node) => {
+                node.setAttribute('aria-valuenow', String(riskValue));
+            });
+            collect('[data-field="id-risk-note"]').forEach((node) => {
+                node.textContent = riskNote;
             });
             collect('[data-field="id-count"]').forEach((node) => {
                 const total = idList.length;
@@ -1416,11 +1544,33 @@
 
         addIdEntry(service) {
             this.state.idList = this.state.idList || [];
+            const wasEmpty = !this.state.idList.length;
             if (!this.state.idList.includes(service)) {
                 this.state.idList.push(service);
             }
+            this.progressIdRiskOnSubmission(wasEmpty);
             this.captureHudSnapshot();
             this.forceHudRefresh();
+        }
+
+        progressIdRiskOnSubmission(wasEmpty) {
+            const hasIds = this.state.idList.length > 0;
+            if (!hasIds) {
+                this.state.idRisk = 0;
+                return;
+            }
+            if (wasEmpty || this.state.idRisk < 10) {
+                this.state.idRisk = 10;
+                return;
+            }
+            const rawRisk = Number.isFinite(this.state.idRisk) ? this.state.idRisk : 0;
+            let risk = utils.clamp(rawRisk, 0, 99);
+            if (risk < 90) {
+                risk = Math.min(90, risk + utils.between(1, 10));
+            } else if (risk < 99) {
+                risk = Math.min(99, risk + 1);
+            }
+            this.state.idRisk = risk;
         }
 
         shouldTriggerIdentityTheft() {
@@ -1537,6 +1687,7 @@
                 return;
             }
             this.state = this.createInitialState();
+            this.normalizeStateCollections();
             this.persistState();
             const firstId = this.pickFirstScenario();
             this.navigateTo(`${firstId}.html`);
@@ -1670,6 +1821,7 @@
                     parsed.happinessEffects = Array.isArray(parsed.happinessEffects) ? parsed.happinessEffects : [];
                     parsed.idList = Array.isArray(parsed.idList) ? parsed.idList : [];
                     parsed.hobbies = Array.isArray(parsed.hobbies) ? parsed.hobbies : [];
+                    parsed.idRisk = typeof parsed.idRisk === 'number' ? parsed.idRisk : 0;
                     return parsed;
                 }
             } catch (err) {
@@ -1696,6 +1848,7 @@
                 economyEffects: [{id: 'bills', name: 'Bills', amount: -1000}],
                 happinessEffects: [],
                 idList: [],
+                idRisk: 0,
                 hobbies: [],
                 visitedRandom: [],
                 lastSnapshot: {money: 10000, happiness: 50},
