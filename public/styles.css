@@ -454,6 +454,7 @@ body.modal-open .page-shell {
     position: relative;
     text-align: center;
     overflow: hidden;
+    z-index: 1;
 }
 
 .intro-blurb-stage.is-complete {
@@ -471,6 +472,8 @@ body.modal-open .page-shell {
     transform: translateY(12px);
     visibility: hidden;
     transition: opacity 1s ease, transform 1s ease, visibility 0s linear 1s;
+    position: relative;
+    z-index: 2;
 }
 
 .intro-blurb-list p {

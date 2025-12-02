@@ -647,7 +647,7 @@
                 `Alex is resilient, trusting systems because what other choice is there when you're just trying to live? But in a world where your data is currency and identity is collateral, they're about to discover that the most dangerous deals are the ones that feel inevitable.`,
             ];
             const blurbDuration = prefersReducedMotion ? 5000 : 7000;
-            const gapBetween = prefersReducedMotion ? 35 : 45;
+            const overlapDelay = Math.max(50, Math.round(blurbDuration * 0.7));
 
             introTitle?.setAttribute('data-stage', 'pending');
             footer?.setAttribute('data-stage', 'pending');
@@ -680,6 +680,14 @@
                 return listContainer;
             };
 
+            const revealList = () => {
+                const list = addStaticList();
+                if (!list) return;
+                list.classList.remove('visible');
+                void list.offsetHeight;
+                requestAnimationFrame(() => list.classList.add('visible'));
+            };
+
             const finishSequence = () => {
                 if (sequenceDone) return;
                 sequenceDone = true;
@@ -687,17 +695,11 @@
                     clearTimeout(failSafeTimer);
                     failSafeTimer = null;
                 }
-                const list = addStaticList();
-                if (list) {
-                    list.classList.remove('visible');
-                    // Force reflow before applying visibility so the fade animates.
-                    void list.offsetHeight;
-                    requestAnimationFrame(() => list.classList.add('visible'));
-                }
                 if (blurbStage) {
                     blurbStage.classList.add('is-complete');
                     blurbStage.innerHTML = '';
                 }
+                requestAnimationFrame(() => revealList());
                 showCTA();
             };
 
@@ -725,26 +727,34 @@
                 });
             };
 
-            const runSequence = async () => {
+            const runSequence = () => {
                 if (!blurbStage) {
                     finishSequence();
                     return;
                 }
-                for (let i = 0; i < blurbs.length; i += 1) {
+                let completed = 0;
+                const startBlurb = (index) => {
+                    if (index >= blurbs.length) return;
                     const blurb = doc.createElement('p');
                     blurb.className = 'intro-blurb';
-                    blurb.textContent = blurbs[i];
+                    blurb.textContent = blurbs[index];
                     blurbStage.innerHTML = '';
                     blurbStage.appendChild(blurb);
-                    await animateBlurb(blurb, i === blurbs.length - 1);
-                    if (i < blurbs.length - 1 && gapBetween > 0) {
-                        await wait(gapBetween);
+                    const animPromise = animateBlurb(blurb, index === blurbs.length - 1);
+                    animPromise.finally(() => {
+                        completed += 1;
+                        if (completed >= blurbs.length) {
+                            finishSequence();
+                        }
+                    });
+                    if (index < blurbs.length - 1) {
+                        setTimeout(() => startBlurb(index + 1), overlapDelay);
                     }
-                }
-                finishSequence();
+                };
+                startBlurb(0);
             };
 
-            const totalDuration = blurbDuration * blurbs.length + 1500;
+            const totalDuration = blurbDuration + (overlapDelay * (blurbs.length - 1)) + 2500;
             failSafeTimer = setTimeout(finishSequence, totalDuration);
             setTimeout(() => {
                 runSequence().catch(() => finishSequence());
