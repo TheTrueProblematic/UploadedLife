@@ -943,10 +943,27 @@
 
             const doc = win.document;
             const view = def.build(this.state, this, utils);
-            const scenarioText = typeof view.text === 'string' && view.text.trim() ? view.text : '';
+            let scenarioText = typeof view.text === 'string' && view.text.trim() ? view.text : '';
+
+            // ULTIMATE FAILSAFE: Intercept empty content
             if (!scenarioText) {
-                console.warn(`Uploaded Life: scenario ${scenarioId} returned empty text.`);
+                console.warn(`Uploaded Life: Critical content failure for ${scenarioId}. Engaging failsafe.`, {
+                    id: scenarioId,
+                    type: def.type,
+                    pool: def.pool,
+                    stateSnapshot: JSON.parse(JSON.stringify(this.state))
+                });
+                scenarioText = "The simulation flickers. You find yourself moving forward despite the glitch.";
+
+                // Ensure we have choices to proceed
+                if (!view.choices || !view.choices.length) {
+                    view.choices = [{
+                        label: "Continue",
+                        next: "RANDOM"
+                    }];
+                }
             }
+
             const container = doc.createElement('div');
             container.className = 'page-shell';
 
@@ -972,7 +989,7 @@
             card.className = 'scenario-card';
             const text = doc.createElement('p');
             text.className = 'scenario-text';
-            text.textContent = scenarioText || 'This scenario failed to load content. Please continue to keep playing.';
+            text.textContent = scenarioText;
             card.appendChild(text);
 
             if (view.details) {
@@ -2427,6 +2444,9 @@
                     };
                     break;
                 case 'incidentChoice':
+                    if (config.dataSource && !datasetCollections[config.dataSource]) {
+                        console.warn(`Uploaded Life: scenario ${row.id} references invalid dataSource "${config.dataSource}"`);
+                    }
                     definition = {
                         id: row.id,
                         pool: row.pool,
@@ -2738,9 +2758,34 @@
                     definition = null;
                     break;
             }
+
             if (!definition) {
                 return null;
             }
+
+            // Foolproof Fallback Wrapper
+            const originalBuild = definition.build;
+            definition.build = (...args) => {
+                try {
+                    const view = originalBuild(...args);
+                    if (!view || !view.text || (typeof view.text === 'string' && !view.text.trim())) {
+                        console.warn(`Uploaded Life: Fallback triggered for ${row.id}`, { view });
+                        const fallbackText = row.text || "The situation is unclear, but you must press on.";
+                        view.text = fallbackText;
+                        if (!view.choices || view.choices.length === 0) {
+                            view.choices = [{ label: "Continue", next: "RANDOM" }];
+                        }
+                    }
+                    return view;
+                } catch (err) {
+                    console.error(`Uploaded Life: Crash in build for ${row.id}`, err);
+                    return {
+                        text: "An unexpected error occurred. You shake it off and continue.",
+                        choices: [{ label: "Continue", next: "RANDOM" }]
+                    };
+                }
+            };
+
             return { ...definition, scenarioType: type };
         }
 
