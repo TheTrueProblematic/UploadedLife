@@ -1093,6 +1093,12 @@ body[data-viewport-mode="mobile"] .site-footer {
     overflow-y: auto;
     /* Allow scrolling if needed */
     padding: 0.5rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.learnmore-content::-webkit-scrollbar {
+    display: none;
 }
 
 .learnmore-sentence {
