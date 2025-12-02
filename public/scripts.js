@@ -118,7 +118,7 @@
             this.localStorageKey = 'uploaded-life-state-v1';
             this.state = this.loadState();
             this.normalizeStateCollections();
-            this.hudHeartbeat = {timer: null, callback: null, scopes: []};
+            this.hudHeartbeat = { timer: null, callback: null, scopes: [] };
             const providedLibrary = scenarioLibrary || {};
             this.scenarios = providedLibrary;
             this.scenariosReady = Object.keys(providedLibrary).length > 0;
@@ -250,7 +250,7 @@
         handleAudioMessage(event) {
             const payload = event?.data?.uploadedLifeAudio;
             if (!payload || payload.type !== 'set-theme') return;
-            this.setAudioThemeByTarget(payload.target, {force: !!payload.force});
+            this.setAudioThemeByTarget(payload.target, { force: !!payload.force });
         }
 
         getParentWindow() {
@@ -265,7 +265,7 @@
         postAudioMessage(targetWindow, payload) {
             if (!targetWindow) return;
             try {
-                targetWindow.postMessage({uploadedLifeAudio: payload}, '*');
+                targetWindow.postMessage({ uploadedLifeAudio: payload }, '*');
             } catch (err) {
                 /* ignore cross-origin messaging issues */
             }
@@ -286,7 +286,7 @@
             this.currentTheme = theme;
             this.currentTrack = theme ? `proxy:${theme}` : '';
             const normalized = this.normalizeTarget(target);
-            this.forwardAudioTheme(normalized, {force: !!options.force});
+            this.forwardAudioTheme(normalized, { force: !!options.force });
         }
 
         setAudioThemeByTarget(target, options = {}) {
@@ -299,7 +299,7 @@
             this.setAudioTheme(theme, options);
         }
 
-        setAudioTheme(theme, {force = false} = {}) {
+        setAudioTheme(theme, { force = false } = {}) {
             if (!theme) return;
 
             // If the theme is unchanged and we already have a track, do not restart.
@@ -398,7 +398,7 @@
             const target = this.deriveTargetFromDocument(doc, pageType);
             if (!target) return;
             const shouldForce = !this.currentTrack;
-            this.setAudioThemeByTarget(target, {force: shouldForce});
+            this.setAudioThemeByTarget(target, { force: shouldForce });
         }
 
         deriveTargetFromDocument(doc, pageType) {
@@ -452,7 +452,7 @@
                 if (this.audioUnlockTargets.has(target)) return;
                 this.audioUnlockTargets.add(target);
                 this.audioUnlockEvents.forEach((evt) => {
-                    target.addEventListener(evt, this.audioUnlockHandler, {once: true});
+                    target.addEventListener(evt, this.audioUnlockHandler, { once: true });
                 });
             });
         }
@@ -524,7 +524,7 @@
             this.frameRefs.lastGameSrc = initialSrc;
             this.pendingGameTarget = initialSrc;
             this.activeTarget = initialSrc;
-            this.setAudioThemeByTarget(initialSrc, {force: !this.currentTrack});
+            this.setAudioThemeByTarget(initialSrc, { force: !this.currentTrack });
             const resizeHandler = () => this.evaluateViewport();
             win.addEventListener('resize', resizeHandler);
             this.renderVirtualPage(initialSrc);
@@ -714,16 +714,16 @@
                 const exitScale = isFinal ? 2.55 : 2.25;
                 const animation = blurbEl.animate(
                     [
-                        {opacity: 0, transform: 'translateY(52px) scale(0.42)', filter: 'blur(5px)', easing: 'cubic-bezier(0.16, 0.94, 0.32, 1)'},
-                        {opacity: 1, transform: 'translateY(0) scale(0.97)', filter: 'blur(0)', offset: 0.18, easing: 'cubic-bezier(0.16, 0.94, 0.32, 1)'},
-                        {opacity: 1, transform: 'translateY(0) scale(0.97)', filter: 'blur(0)', offset: 0.72},
-                        {opacity: 0, transform: `translateY(-50px) scale(${exitScale})`, filter: 'blur(6px)', offset: 1, easing: 'cubic-bezier(0.55, 0, 1, 0.6)'},
+                        { opacity: 0, transform: 'translateY(52px) scale(0.42)', filter: 'blur(5px)', easing: 'cubic-bezier(0.16, 0.94, 0.32, 1)' },
+                        { opacity: 1, transform: 'translateY(0) scale(0.97)', filter: 'blur(0)', offset: 0.18, easing: 'cubic-bezier(0.16, 0.94, 0.32, 1)' },
+                        { opacity: 1, transform: 'translateY(0) scale(0.97)', filter: 'blur(0)', offset: 0.72 },
+                        { opacity: 0, transform: `translateY(-50px) scale(${exitScale})`, filter: 'blur(6px)', offset: 1, easing: 'cubic-bezier(0.55, 0, 1, 0.6)' },
                     ],
-                    {duration: blurbDuration, easing: 'cubic-bezier(0.6, 0.04, 0.32, 1)', fill: 'forwards'},
+                    { duration: blurbDuration, easing: 'cubic-bezier(0.6, 0.04, 0.32, 1)', fill: 'forwards' },
                 );
                 return new Promise((resolve) => {
-                    animation.addEventListener('finish', resolve, {once: true});
-                    animation.addEventListener('cancel', resolve, {once: true});
+                    animation.addEventListener('finish', resolve, { once: true });
+                    animation.addEventListener('cancel', resolve, { once: true });
                 });
             };
 
@@ -762,7 +762,7 @@
 
             button?.addEventListener('click', () => {
                 finishSequence();
-                this.startNewRun({viaIntro: true});
+                this.startNewRun({ viaIntro: true });
             });
         }
 
@@ -832,15 +832,73 @@
             shell.appendChild(this.buildFooter(doc));
             const scope = this.getViewRoot(doc);
             scope?.querySelector('[data-action="replay"]')?.addEventListener('click', () => {
-                this.startNewRun({viaIntro: false});
+                this.startNewRun({ viaIntro: false });
             });
         }
 
         initLearnMore(win) {
             const doc = win.document;
             const scope = this.getViewRoot(doc);
+            const contentContainer = scope?.querySelector('.learnmore-content');
+            const readMoreBtn = scope?.querySelector('[data-action="read-more"]');
+
+            const sentences = [
+                "The bipartisan Kids Online Safety Act (KOSA), framed as a broad online safety bill, would effectively require platforms to implement age verification nationwide to distinguish minors from adults.",
+                "The legislation is driven by genuine concerns about teen mental health crises linked to social media and the ease with which minors can access harmful content online.",
+                "To comply with KOSA and similar laws, platforms would need to verify every user's age through methods like uploading government IDs, submitting to facial recognition scans, or other invasive identification processes.",
+                "Privacy advocates warn that forcing all users to hand over sensitive personal information or submit to biometric surveillance just to access lawful online speech creates dangerous precedents for data breaches, eliminates anonymous expression, and threatens constitutional free speech rights.",
+                "As of 2025, KOSA has not yet become law, but Congress is actively debating it while state courts have already blocked similar age verification laws in Ohio, Indiana, Utah, and Mississippi for likely violating the First Amendment."
+            ];
+
+            if (contentContainer && sentences.length > 0) {
+                contentContainer.innerHTML = '';
+                sentences.forEach((text, index) => {
+                    const p = doc.createElement('p');
+                    p.className = 'learnmore-sentence';
+                    p.textContent = text;
+                    contentContainer.appendChild(p);
+
+                    setTimeout(() => {
+                        p.classList.add('visible');
+                        p.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        if (index === sentences.length - 1 && readMoreBtn) {
+                            setTimeout(() => {
+                                readMoreBtn.style.display = 'block';
+                                // Trigger reflow for animation if needed, or just let it appear
+                                // If we want it to fade in, we'd need styles for that too. 
+                                // For now, just appearing is per spec "a new button should appear".
+                                // Let's add a simple fade in for the button too if possible, but spec just says "appear".
+                                readMoreBtn.animate([
+                                    { opacity: 0, transform: 'translateY(10px)' },
+                                    { opacity: 1, transform: 'translateY(0)' }
+                                ], {
+                                    duration: 500,
+                                    fill: 'forwards',
+                                    easing: 'ease-out'
+                                });
+                                readMoreBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }, 1000);
+                        }
+                    }, index * 1500 + 500); // 1.5s delay between each
+                });
+            }
+
+            readMoreBtn?.addEventListener('click', () => {
+                const url = 'https://docs.google.com/document/d/18Z2PQmE_tMDUcH_q_eyAdoFGa0Gxz_LMCcTJ-UNRu1g/export?format=pdf';
+                try {
+                    win.open(url, '_blank', 'noopener');
+                } catch (err) {
+                    try {
+                        root.open(url, '_blank', 'noopener');
+                    } catch (error) {
+                        window.open(url, '_blank');
+                    }
+                }
+            });
+
             scope?.querySelector('[data-action="play-again"]')?.addEventListener('click', () => {
-                this.startNewRun({viaIntro: false});
+                this.startNewRun({ viaIntro: false });
             });
             scope?.querySelector('[data-action="share-experience"]')?.addEventListener('click', () => {
                 const url = 'https://forms.gle/jZhmSs3vRNRfoTeaA';
@@ -873,7 +931,7 @@
             scope?.querySelector('[data-action="resize-check"]')?.addEventListener('click', () => {
                 this.evaluateViewport(true);
                 const target = this.pendingGameTarget || this.frameRefs.lastGameSrc || 'Pages/main.html';
-                this.setAudioThemeByTarget(target, {force: true});
+                this.setAudioThemeByTarget(target, { force: true });
                 this.renderVirtualPage(target);
             });
         }
@@ -962,7 +1020,7 @@
             let economy = ensureArray(this.state.economyEffects, []);
             const hasBills = economy.some((entry) => entry && (entry.id === 'bills' || entry.name === 'Bills'));
             if (!hasBills) {
-                economy.unshift({id: 'bills', name: 'Bills', amount: -1000});
+                economy.unshift({ id: 'bills', name: 'Bills', amount: -1000 });
             }
             this.state.economyEffects = dedupeById(economy);
 
@@ -986,16 +1044,16 @@
         captureHudSnapshot() {
             const cloneList = (list) => JSON.parse(JSON.stringify(list || []));
             const ensureBills = (list) => {
-                if (!Array.isArray(list)) return [{id: 'bills', name: 'Bills', amount: -1000}];
+                if (!Array.isArray(list)) return [{ id: 'bills', name: 'Bills', amount: -1000 }];
                 if (!list.some((entry) => entry && (entry.id === 'bills' || entry.name === 'Bills'))) {
-                    return [{id: 'bills', name: 'Bills', amount: -1000}, ...list];
+                    return [{ id: 'bills', name: 'Bills', amount: -1000 }, ...list];
                 }
                 return list;
             };
             const economy = ensureBills(cloneList(this.state.economyEffects));
             const happiness = cloneList(this.state.happinessEffects);
             const idList = Array.from(new Set((this.state.idList || []).filter(Boolean)));
-            this.state.lastHud = {economy, happiness, idList};
+            this.state.lastHud = { economy, happiness, idList };
         }
 
         createMobileHudSummary(doc, state) {
@@ -1126,7 +1184,7 @@
             const economyEffects = this.state.economyEffects;
             const happinessEffects = this.state.happinessEffects;
             const idList = this.state.idList;
-            const fallbackEconomy = this.state.lastHud?.economy || [{id: 'bills', name: 'Bills', amount: -1000}];
+            const fallbackEconomy = this.state.lastHud?.economy || [{ id: 'bills', name: 'Bills', amount: -1000 }];
             const fallbackHappiness = this.state.lastHud?.happiness || [];
             const fallbackIds = this.state.lastHud?.idList || [];
 
@@ -1236,7 +1294,7 @@
 
         handleChoice(choice) {
             if (choice.requireModal) {
-                this.openModal({body: choice.requireModal, actions: [{label: 'Continue', primary: true}]});
+                this.openModal({ body: choice.requireModal, actions: [{ label: 'Continue', primary: true }] });
                 return;
             }
 
@@ -1251,14 +1309,14 @@
                                 label: 'Submit ID',
                                 primary: true,
                                 handler: () => {
-                                    const updated = {...choice, idService: service};
+                                    const updated = { ...choice, idService: service };
                                     this.commitChoice(updated);
                                 },
                             },
                             {
                                 label: 'Nevermind',
                                 handler: () => {
-                                    const decline = choice.idRequirement.decline || {next: choice.next};
+                                    const decline = choice.idRequirement.decline || { next: choice.next };
                                     this.commitChoice({
                                         ...choice,
                                         next: decline.next || choice.next,
@@ -1282,7 +1340,7 @@
         commitChoice(choice) {
             this.pendingChoiceMeta = choice.meta || null;
             if (choice.immediate) {
-                const normalized = {...choice.immediate};
+                const normalized = { ...choice.immediate };
                 if (typeof normalized.money !== 'undefined') {
                     normalized.money = adjustMoneyDelta(normalized.money);
                 }
@@ -1447,13 +1505,13 @@
                 id: `hobeco-${hobbyId}`,
                 name: config.costLabel,
                 amount: -monthlyCost,
-                meta: {hobbyId},
+                meta: { hobbyId },
             };
             const happyEffect = {
                 id: `hobhap-${hobbyId}`,
                 name: config.happyLabel,
                 amount: happinessBoost,
-                meta: {hobbyId, requiresId: config.requiresId},
+                meta: { hobbyId, requiresId: config.requiresId },
             };
             this.state.economyEffects.push(econEffect);
             this.state.happinessEffects.push(happyEffect);
@@ -1478,7 +1536,7 @@
             this.captureHudSnapshot();
         }
 
-        verifyHobby({hobbyId, provider}) {
+        verifyHobby({ hobbyId, provider }) {
             const hobby = (this.state.hobbies || []).find((item) => item.id === hobbyId);
             if (hobby) {
                 hobby.idSubmitted = true;
@@ -1690,9 +1748,9 @@
             this.stopHudHeartbeat();
         }
 
-        startNewRun({viaIntro} = {}) {
+        startNewRun({ viaIntro } = {}) {
             if (!this.scenariosReady) {
-                this.pendingStartArgs = {viaIntro};
+                this.pendingStartArgs = { viaIntro };
                 this.showScenarioLoadingNotice();
                 return;
             }
@@ -1816,7 +1874,7 @@
             }
             if (changed && this.viewMode === 'mobile') {
                 const target = this.pendingGameTarget || this.frameRefs.lastGameSrc || 'Pages/main.html';
-                this.setAudioThemeByTarget(target, {force: true});
+                this.setAudioThemeByTarget(target, { force: true });
                 this.renderVirtualPage(target);
             }
         }
@@ -1827,7 +1885,7 @@
                 const raw = storage.getItem(this.localStorageKey);
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    parsed.economyEffects = Array.isArray(parsed.economyEffects) ? parsed.economyEffects : [{id: 'bills', name: 'Bills', amount: -1000}];
+                    parsed.economyEffects = Array.isArray(parsed.economyEffects) ? parsed.economyEffects : [{ id: 'bills', name: 'Bills', amount: -1000 }];
                     parsed.happinessEffects = Array.isArray(parsed.happinessEffects) ? parsed.happinessEffects : [];
                     parsed.idList = Array.isArray(parsed.idList) ? parsed.idList : [];
                     parsed.hobbies = Array.isArray(parsed.hobbies) ? parsed.hobbies : [];
@@ -1855,13 +1913,13 @@
                 money: 10000,
                 happiness: 50,
                 turn: 0,
-                economyEffects: [{id: 'bills', name: 'Bills', amount: -1000}],
+                economyEffects: [{ id: 'bills', name: 'Bills', amount: -1000 }],
                 happinessEffects: [],
                 idList: [],
                 idRisk: 0,
                 hobbies: [],
                 visitedRandom: [],
-                lastSnapshot: {money: 10000, happiness: 50},
+                lastSnapshot: { money: 10000, happiness: 50 },
             };
         }
 
@@ -1889,7 +1947,7 @@
             }
         }
 
-        openModal({body, actions = [{label: 'Close', primary: true}], dismissible = true}) {
+        openModal({ body, actions = [{ label: 'Close', primary: true }], dismissible = true }) {
             const doc = this.frameRefs.currentFrameWindow?.document || document;
             if (!this.modal.overlay) {
                 this.modal.overlay = doc.createElement('div');
@@ -1980,7 +2038,7 @@
             }
             this.openModal({
                 body: 'Loading scenario data… please try again in a moment.',
-                actions: [{label: 'Okay', primary: true}],
+                actions: [{ label: 'Okay', primary: true }],
                 dismissible: true,
             });
             this.scenarioLoadModalVisible = true;
@@ -2270,8 +2328,8 @@
                                 return {
                                     label: job.label,
                                     next: config.next || 'RANDOM',
-                                    econEffect: {name: job.effect, amount},
-                                    meta: {economyMeta: {markJob: true}},
+                                    econEffect: { name: job.effect, amount },
+                                    meta: { economyMeta: { markJob: true } },
                                 };
                             });
                             return {
@@ -2340,9 +2398,9 @@
                                 if (key) {
                                     placeholders[key] = currency.format(cost);
                                 }
-                                const hobbyMeta = option.hobby ? {...option.hobby} : {};
+                                const hobbyMeta = option.hobby ? { ...option.hobby } : {};
                                 const labelText = option.description
-                                    ? replacePlaceholders(option.description, {cost: currency.format(cost)})
+                                    ? replacePlaceholders(option.description, { cost: currency.format(cost) })
                                     : option.label;
                                 const choice = {
                                     label: labelText || option.label || 'Pick this hobby',
@@ -2356,7 +2414,7 @@
                                     },
                                 };
                                 if (hobbyMeta.requiresId) {
-                                    choice.idRequirement = {services: [hobbyMeta.provider]};
+                                    choice.idRequirement = { services: [hobbyMeta.provider] };
                                 }
                                 return choice;
                             });
@@ -2385,7 +2443,7 @@
                             }
                             const money = applyCostIncrease(utils.weightedBetween(hit.money[0], hit.money[1]));
                             const happiness = utils.weightedBetween(hit.happiness[0], hit.happiness[1]);
-                            const replacements = {story: hit.story || ''};
+                            const replacements = { story: hit.story || '' };
                             const template = row.text || '{{story}}';
                             return {
                                 text: replacePlaceholders(template, replacements),
@@ -2394,12 +2452,12 @@
                                     {
                                         label: 'Handle it immediately',
                                         next: config.next || 'RANDOM',
-                                        immediate: {money: -money, happiness: -Math.ceil(happiness / 2)},
+                                        immediate: { money: -money, happiness: -Math.ceil(happiness / 2) },
                                     },
                                     {
                                         label: 'Ignore it for now',
                                         next: config.next || 'RANDOM',
-                                        immediate: {happiness: -happiness},
+                                        immediate: { happiness: -happiness },
                                     },
                                 ],
                             };
@@ -2413,12 +2471,12 @@
                         build: () => {
                             const apps = Array.isArray(config.apps) ? config.apps : [];
                             const app = utils.pick(apps) || '';
-                            const replacements = {app};
+                            const replacements = { app };
                             const firstChoice = {
                                 label: 'Upload the ID',
                                 next: config.next || 'RANDOM',
                                 idService: app || undefined,
-                                meta: {setDatingMethod: 'app'},
+                                meta: { setDatingMethod: 'app' },
                             };
                             if (!firstChoice.idService) {
                                 delete firstChoice.idService;
@@ -2431,7 +2489,7 @@
                                     {
                                         label: 'Skip the app and go offline',
                                         next: config.next || 'RANDOM',
-                                        meta: {setDatingMethod: 'inperson'},
+                                        meta: { setDatingMethod: 'inperson' },
                                     },
                                 ],
                             };
@@ -2483,24 +2541,24 @@
                                 return {
                                     text: row.text || '',
                                     details: row.details || undefined,
-                                    choices: [{label: 'Skip it', next: 'RANDOM'}],
+                                    choices: [{ label: 'Skip it', next: 'RANDOM' }],
                                 };
                             }
                             const cost = applyCostIncrease(generateRangeValue(entry.cost, 0));
                             const happiness = applyHappinessGain(generateRangeValue(entry.happiness, 0));
-                            const replacements = {cost: currency.format(cost)};
+                            const replacements = { cost: currency.format(cost) };
                             const joinChoice = {
                                 label: 'Join in',
                                 next: 'RANDOM',
-                                immediate: {money: -cost, happiness},
+                                immediate: { money: -cost, happiness },
                             };
                             if (entry.providers?.length) {
-                                joinChoice.idRequirement = {services: entry.providers};
+                                joinChoice.idRequirement = { services: entry.providers };
                             }
                             return {
                                 text: replacePlaceholders(entry.text || row.text || '', replacements),
                                 details: row.details ? replacePlaceholders(row.details, replacements) : undefined,
-                                choices: [joinChoice, {label: 'Skip it', next: 'RANDOM'}],
+                                choices: [joinChoice, { label: 'Skip it', next: 'RANDOM' }],
                             };
                         },
                     };
@@ -2521,12 +2579,12 @@
                                     {
                                         label: 'Spend to soften it',
                                         next: 'RANDOM',
-                                        immediate: {money: -money, happiness: -Math.ceil(happiness / 2)},
+                                        immediate: { money: -money, happiness: -Math.ceil(happiness / 2) },
                                     },
                                     {
                                         label: 'Tough it out',
                                         next: 'RANDOM',
-                                        immediate: {happiness: -happiness},
+                                        immediate: { happiness: -happiness },
                                     },
                                 ],
                             };
@@ -2543,12 +2601,12 @@
                                 return {
                                     text: row.text || '',
                                     details: row.details || undefined,
-                                    choices: [{label: 'Skip it', next: 'RANDOM'}],
+                                    choices: [{ label: 'Skip it', next: 'RANDOM' }],
                                 };
                             }
                             const cost = applyCostIncrease(generateRangeValue(entry.cost, 0));
                             const happiness = applyHappinessGain(generateRangeValue(entry.happiness, 0));
-                            const replacements = {cost: currency.format(cost)};
+                            const replacements = { cost: currency.format(cost) };
                             const joinChoice = {
                                 label: 'Join the hobby',
                                 next: 'RANDOM',
@@ -2564,12 +2622,12 @@
                                 },
                             };
                             if (entry.requiresId) {
-                                joinChoice.idRequirement = {services: [entry.provider]};
+                                joinChoice.idRequirement = { services: [entry.provider] };
                             }
                             return {
                                 text: replacePlaceholders(entry.text || row.text || '', replacements),
                                 details: row.details ? replacePlaceholders(row.details, replacements) : undefined,
-                                choices: [{label: 'Skip it', next: 'RANDOM'}, joinChoice],
+                                choices: [{ label: 'Skip it', next: 'RANDOM' }, joinChoice],
                             };
                         },
                     };
@@ -2587,14 +2645,14 @@
                                     {
                                         label: 'Lean on friends',
                                         next: 'RANDOM',
-                                        meta: {removeRelationship: true},
-                                        immediate: {money: -20, happiness: -Math.ceil(loss / 2)},
+                                        meta: { removeRelationship: true },
+                                        immediate: { money: -20, happiness: -Math.ceil(loss / 2) },
                                     },
                                     {
                                         label: 'Shut down emotionally',
                                         next: 'RANDOM',
-                                        meta: {removeRelationship: true},
-                                        immediate: {happiness: -loss},
+                                        meta: { removeRelationship: true },
+                                        immediate: { happiness: -loss },
                                     },
                                 ],
                             };
@@ -2610,11 +2668,11 @@
                             text: row.text,
                             details: row.details || undefined,
                             choices: [
-                                {label: 'Stay focused solo', next: 'RANDOM'},
+                                { label: 'Stay focused solo', next: 'RANDOM' },
                                 {
                                     label: 'See where it goes',
                                     next: config.next || 'RANDOM',
-                                    meta: {setPendingRelationship: {}}
+                                    meta: { setPendingRelationship: {} }
                                 },
                             ],
                         }),
@@ -2626,7 +2684,7 @@
                         pool: row.pool,
                         build: () => {
                             const raise = generateRangeValue(config.raiseRange);
-                            const replacements = {raise: currency.format(raise)};
+                            const replacements = { raise: currency.format(raise) };
                             const stress = config.stress;
                             return {
                                 text: replacePlaceholders(row.text, replacements),
@@ -2635,7 +2693,7 @@
                                     {
                                         label: 'Accept the promotion',
                                         next: 'RANDOM',
-                                        econEffect: {name: 'Promotion bump', amount: raise},
+                                        econEffect: { name: 'Promotion bump', amount: raise },
                                         meta: {
                                             additionalHappinessEffect: Math.random() < 0.25 ? {
                                                 name: stress,
@@ -2643,7 +2701,7 @@
                                             } : null,
                                         },
                                     },
-                                    {label: 'Decline and keep balance', next: 'RANDOM'},
+                                    { label: 'Decline and keep balance', next: 'RANDOM' },
                                 ],
                             };
                         },
@@ -2657,9 +2715,9 @@
                         build: (state) => {
                             const hobby = (state.hobbies || []).find((item) => item.requiresId && !item.idSubmitted);
                             if (!hobby) {
-                                return {text: row.text, details: row.details || undefined, choices: []};
+                                return { text: row.text, details: row.details || undefined, choices: [] };
                             }
-                            const replacements = {hobbyName: hobby.name || ''};
+                            const replacements = { hobbyName: hobby.name || '' };
                             return {
                                 text: replacePlaceholders(row.text, replacements),
                                 details: row.details ? replacePlaceholders(row.details, replacements) : undefined,
@@ -2667,9 +2725,9 @@
                                     {
                                         label: 'Submit ID to keep it',
                                         next: 'RANDOM',
-                                        meta: {verifyHobby: {hobbyId: hobby.id, provider: hobby.provider}},
+                                        meta: { verifyHobby: { hobbyId: hobby.id, provider: hobby.provider } },
                                     },
-                                    {label: 'Drop the hobby', next: 'RANDOM', meta: {removeHobby: hobby.id}},
+                                    { label: 'Drop the hobby', next: 'RANDOM', meta: { removeHobby: hobby.id } },
                                 ],
                             };
                         },
@@ -2683,7 +2741,7 @@
             if (!definition) {
                 return null;
             }
-            return {...definition, scenarioType: type};
+            return { ...definition, scenarioType: type };
         }
 
         function selectJobEntries(entries, limit = 2) {
@@ -2736,7 +2794,7 @@
 
         if (typeof fetch === 'function') {
             try {
-                const response = await fetch(target, {credentials: 'same-origin'});
+                const response = await fetch(target, { credentials: 'same-origin' });
                 if (!response.ok) {
                     throw new Error(`Failed to load ${label || target}: ${response.status}`);
                 }
