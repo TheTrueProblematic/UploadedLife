@@ -855,14 +855,14 @@ body[data-viewport-mode="mobile"] #app-root {
 body[data-viewport-mode="mobile"] .page-shell {
     height: 100%;
     min-height: 0;
-    padding: 1rem 5vw 1.2rem;
-    gap: 0.9rem;
+    padding: 0.75rem 4vw 1rem;
+    gap: 0.5rem;
     overflow: hidden;
 }
 
 body[data-viewport-mode="mobile"] .hero-title {
-    font-size: clamp(1.75rem, 6vw, 2.8rem);
-    letter-spacing: 0.14rem;
+    font-size: clamp(1.5rem, 5vw, 2.2rem);
+    letter-spacing: 0.1rem;
     margin-bottom: 0;
 }
 
@@ -906,11 +906,11 @@ body[data-viewport-mode="mobile"] .id-badges {
 }
 
 body[data-viewport-mode="mobile"] .scenario-card {
-    flex: 1 1 auto;
+    flex: 1;
     min-height: 0;
-    max-height: calc(var(--viewport-height) * 0.54);
+    max-height: none;
     overflow: auto;
-    padding: 1rem 0.9rem 1.1rem;
+    padding: 0.85rem 0.8rem 1rem;
 }
 
 body[data-viewport-mode="mobile"] .scenario-card .choice-grid {
@@ -919,32 +919,37 @@ body[data-viewport-mode="mobile"] .scenario-card .choice-grid {
 
 body[data-viewport-mode="mobile"] .mobile-detail-board {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.65rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
 }
 
 body[data-viewport-mode="mobile"] .mobile-detail-block {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 0.65rem;
-    padding: 0.85rem 0.95rem;
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.75rem;
+}
+
+body[data-viewport-mode="mobile"] .mobile-detail-block:nth-child(3) {
+    grid-column: span 2;
 }
 
 body[data-viewport-mode="mobile"] .mobile-detail-block .summary-label {
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.25rem;
     color: var(--muted);
+    font-size: 0.75rem;
 }
 
 body[data-viewport-mode="mobile"] .id-risk {
-    padding: 0.65rem 0.8rem;
+    padding: 0.5rem 0.65rem;
 }
 
 body[data-viewport-mode="mobile"] .id-risk-value {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
 }
 
 body[data-viewport-mode="mobile"] .id-risk-note {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 body[data-viewport-mode="mobile"] .choice-grid {
